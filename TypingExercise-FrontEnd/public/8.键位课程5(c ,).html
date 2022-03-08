@@ -1,0 +1,457 @@
+<!DOCTYPE html PUBLIC <script src="./keyboard/hm.js">
+</script>
+<script type="text/javascript" src="./keyboard/key8.js"></script>
+<link href="./keyboard/keyboard.css" rel="stylesheet" type="text/css">
+<script>
+function MM_jumpMenu(obj) { //v3.0
+	document.location = obj.value;
+	var keyarticle= obj.value.split('.html',1)
+	localStorage.setItem("keyarticle",keyarticle)
+	// console.log(
+	// 	obj.value
+	// );
+}
+</script>
+
+<body onkeydown="return checkDown(event);" onkeypress="return checkKey(event)">
+	<div id="container">
+		<div id="content">
+			<div id="keyboard">
+				<div style="padding-left: 333px;" id="art_text" class="line1">
+					<div class="b_alt">
+						<ul>
+							<li>a</li>
+						</ul>
+					</div>
+					<div class="b_alt">
+						<ul>
+							<li>s</li>
+						</ul>
+					</div>
+					<div class="b_alt">
+						<ul>
+							<li>d</li>
+						</ul>
+					</div>
+					<div class="b_alt">
+						<ul>
+							<li>f</li>
+						</ul>
+					</div>
+					<div class="b_on">
+						<ul>
+							<li>g</li>
+						</ul>
+					</div>
+
+				</div>
+				<div id="keyboard_info" style="padding-left: 210px">
+					<div class="info_text">
+						<ul>
+							<li id="shijian">时间：3分56秒</li>
+							<li id="sudu">速度：1 KMP</li>
+							<li id="right_num">正确率：100 %</li>
+							<li id="jindu">进度：0.71 %</li>
+						</ul>
+					</div>
+					<div class="setting">
+						<select id="jump_menu" onchange="MM_jumpMenu(this)">
+
+							<option value="1.键盘布局.html" >1.键盘布局(KeyBoard Layout)	
+							</option>
+							<option value="2.手指区分练习.html">2.手指区分练习
+							</option>
+							<option value="3.键位纠错练习.html">3.键位纠错练习
+							</option>
+							<option value="4.键位课程1(asdf jkl;).html">4.键位课程1(asdf jkl;)
+							</option>
+							<option value="5.键位课程2(e i).html">5.键位课程2(e i)
+							</option>
+							<option value="6.键位课程3(r u).html">6.键位课程3(r u)
+							</option>
+							<option value="7.键位课程4(g h).html">7.键位课程4(g h)
+							</option>
+							<option value="8.键位课程5(c ,).html" selected="">8.键位课程5(c ,)
+							</option>
+							<option value="9.键位课程6(y t).html">9.键位课程6(y t)
+							</option>
+							<option value="10.键位课程7(m v).html">10.键位课程7(m v)
+							</option>
+							<option value="11.键位课程8(b n).html">11.键位课程8(b n)
+							</option>
+							<option value="12.键位课程9(o w).html">12.键位课程9(o w)
+							</option>
+							<option value="13.键位课程10(p q z).html">13.键位课程10(p q z)
+							</option>
+							<option value="14.键位课程11(x .).html">14.键位课程11(x .)
+							</option>
+							<option value="15.键位课程12(0-9).html">15.键位课程12(0-9)
+							</option>
+							<option value="16.键位课程13(Capital-大写).html">16.键位课程13(Capital-大写)
+							</option>
+							<option value="17.键位课程14(英文标点符号).html">17.键位课程14(英文标点符号)
+							</option>
+
+
+						</select>
+					</div>
+					<div class="clear"></div>
+				</div>
+				<div class="line1">
+					<div id="a_96" class="b1">
+						<ul>
+							<li>~</li>
+							<li>`</li>
+						</ul>
+					</div>
+					<div id="a_49" class="b1">
+						<ul>
+							<li>!</li>
+							<li>1</li>
+						</ul>
+					</div>
+					<div id="a_50" class="b2">
+						<ul>
+							<li>@</li>
+							<li>2</li>
+						</ul>
+					</div>
+					<div id="a_51" class="b1">
+						<ul>
+							<li>#</li>
+							<li>3</li>
+						</ul>
+					</div>
+					<div id="a_52" class="b2">
+						<ul>
+							<li>$</li>
+							<li>4</li>
+						</ul>
+					</div>
+					<div id="a_53" class="b2">
+						<ul>
+							<li>%</li>
+							<li>5</li>
+						</ul>
+					</div>
+					<div id="a_54" class="b2">
+						<ul>
+							<li>^</li>
+							<li>6</li>
+						</ul>
+					</div>
+					<div id="a_55" class="b2">
+						<ul>
+							<li>&amp;</li>
+							<li>7</li>
+						</ul>
+					</div>
+					<div id="a_56" class="b1">
+						<ul>
+							<li>*</li>
+							<li>8</li>
+						</ul>
+					</div>
+					<div id="a_57" class="b2">
+						<ul>
+							<li>(</li>
+							<li>9</li>
+						</ul>
+					</div>
+					<div id="a_48" class="b1">
+						<ul>
+							<li>)</li>
+							<li>0</li>
+						</ul>
+					</div>
+					<div id="a_45" class="b1">
+						<ul>
+							<li>—</li>
+							<li>-</li>
+						</ul>
+					</div>
+					<div id="a_61" class="b1">
+						<ul>
+							<li>+</li>
+							<li>=</li>
+						</ul>
+					</div>
+					<div id="a_8" class="b_back">
+						<ul>
+							<li>←</li>
+							<li>Backspace</li>
+						</ul>
+					</div>
+				</div>
+				<div class="line1">
+					<div id="a_9" class="b_tab">
+						<ul>
+							<li>Tab↔</li>
+						</ul>
+					</div>
+					<div id="a_113" class="b1">
+						<ul>
+							<li>Q</li>
+						</ul>
+					</div>
+					<div id="a_119" class="b2">
+						<ul>
+							<li>W</li>
+						</ul>
+					</div>
+					<div id="a_101" class="b1">
+						<ul>
+							<li>E</li>
+						</ul>
+					</div>
+					<div id="a_114" class="b2">
+						<ul>
+							<li>R</li>
+						</ul>
+					</div>
+					<div id="a_116" class="b2">
+						<ul>
+							<li>T</li>
+						</ul>
+					</div>
+					<div id="a_121" class="b2">
+						<ul>
+							<li>Y</li>
+						</ul>
+					</div>
+					<div id="a_117" class="b2">
+						<ul>
+							<li>U</li>
+						</ul>
+					</div>
+					<div id="a_105" class="b1">
+						<ul>
+							<li>I</li>
+						</ul>
+					</div>
+					<div id="a_111" class="b2">
+						<ul>
+							<li>O</li>
+						</ul>
+					</div>
+					<div id="a_112" class="b1">
+						<ul>
+							<li>P</li>
+						</ul>
+					</div>
+					<div id="a_91" class="b1">
+						<ul>
+							<li>{</li>
+							<li>[</li>
+						</ul>
+					</div>
+					<div id="a_93" class="b1">
+						<ul>
+							<li>}</li>
+							<li>]</li>
+						</ul>
+					</div>
+					<div id="a_92" class="b_tab">
+						<ul>
+							<li>|</li>
+							<li>\</li>
+						</ul>
+					</div>
+				</div>
+				<div class="line1">
+					<div id="a_20" class="b_lock">
+						<ul>
+							<li>Caps Lock</li>
+						</ul>
+					</div>
+					<div id="a_97" class="b1">
+						<ul>
+							<li>A</li>
+						</ul>
+					</div>
+					<div id="a_115" class="b2">
+						<ul>
+							<li>S</li>
+						</ul>
+					</div>
+					<div id="a_100" class="b1">
+						<ul>
+							<li>D</li>
+						</ul>
+					</div>
+					<div id="a_102" class="b2">
+						<ul>
+							<li>F</li>
+							<li class="fj">&nbsp;</li>
+						</ul>
+					</div>
+					<div id="a_103" class="b2">
+						<ul>
+							<li>G</li>
+						</ul>
+					</div>
+					<div id="a_104" class="b2">
+						<ul>
+							<li>H</li>
+						</ul>
+					</div>
+					<div id="a_106" class="b2">
+						<ul>
+							<li>J</li>
+							<li class="fj">&nbsp;</li>
+						</ul>
+					</div>
+					<div id="a_107" class="b1">
+						<ul>
+							<li>K</li>
+						</ul>
+					</div>
+					<div id="a_108" class="b2">
+						<ul>
+							<li>L</li>
+						</ul>
+					</div>
+					<div id="a_59" class="b1">
+						<ul>
+							<li>:</li>
+							<li>;</li>
+						</ul>
+					</div>
+					<div id="a_39" class="b1">
+						<ul>
+							<li>"</li>
+							<li>'</li>
+						</ul>
+					</div>
+					<div id="a_13" class="b_enter">
+						<ul>
+							<li>&nbsp;</li>
+							<li class="enter_ico">Enter</li>
+						</ul>
+					</div>
+				</div>
+				<div class="line1">
+					<div id="a_991" class="b_shift">
+						<ul>
+							<li class="shift_ico">Shift</li>
+						</ul>
+					</div>
+					<div id="a_122" class="b1">
+						<ul>
+							<li>Z</li>
+						</ul>
+					</div>
+					<div id="a_120" class="b2">
+						<ul>
+							<li>X</li>
+						</ul>
+					</div>
+					<div id="a_99" class="b1">
+						<ul>
+							<li>C</li>
+						</ul>
+					</div>
+					<div id="a_118" class="b2">
+						<ul>
+							<li>V</li>
+						</ul>
+					</div>
+					<div id="a_98" class="b2">
+						<ul>
+							<li>B</li>
+						</ul>
+					</div>
+					<div id="a_110" class="b2">
+						<ul>
+							<li>N</li>
+						</ul>
+					</div>
+					<div id="a_109" class="b2">
+						<ul>
+							<li>M</li>
+						</ul>
+					</div>
+					<div id="a_44" class="b1">
+						<ul>
+							<li>&lt;</li>
+							<li>,</li>
+						</ul>
+					</div>
+					<div id="a_46" class="b2">
+						<ul>
+							<li>&gt;</li>
+							<li>.</li>
+						</ul>
+					</div>
+					<div id="a_47" class="b1">
+						<ul>
+							<li>?</li>
+							<li>/</li>
+						</ul>
+					</div>
+					<div id="a_992" class="b_shift">
+						<ul>
+							<li class="shift_ico">Shift</li>
+						</ul>
+					</div>
+				</div>
+				<div class="line1">
+					<div class="b_ctrl">
+						<ul>
+							<li>Ctrl</li>
+						</ul>
+					</div>
+					<div class="b_win">
+						<ul>
+							<li>&nbsp;</li>
+						</ul>
+					</div>
+					<div class="b_alt">
+						<ul>
+							<li>Alt</li>
+						</ul>
+					</div>
+					<div id="a_32" class="b_space">
+						<ul>
+							<li>&nbsp;</li>
+						</ul>
+					</div>
+					<div class="b_alt">
+						<ul>
+							<li>Alt</li>
+						</ul>
+					</div>
+					<div class="b_win">
+						<ul>
+							<li>&nbsp;</li>
+						</ul>
+					</div>
+					<div class="b_mouse">
+						<ul>
+							<li>&nbsp;</li>
+						</ul>
+					</div>
+					<div class="b_ctrl">
+						<ul>
+							<li>Ctrl</li>
+						</ul>
+					</div>
+				</div>
+				<div class="clear"></div>
+			</div>
+		</div>
+		<script type="text/javascript" src="./keyboard/keyboard.js"></script>
+	</div>
+	<script>
+		var _hmt = _hmt || [];
+		(function () {
+			var hm = document.createElement("script");
+			hm.src = "//hm.baidu.com/hm.js?f6c7a8916ae5616fbdc79d60ca4f2a37";
+			var s = document.getElementsByTagName("script")[0];
+			s.parentNode.insertBefore(hm, s);
+		})();
+	</script>
+	</p>
+</body>
+
+</html>
