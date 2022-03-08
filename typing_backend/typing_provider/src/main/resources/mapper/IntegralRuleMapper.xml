@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="com.tfjybj.typing.provider.dao.IntegralRuleDao">
+    <!--教师端增加积分规则 张艳伟-->
+    <insert id="insertIntegralRule" parameterType="com.tfjybj.typing.entity.IntegralRuleEntity">
+        INSERT INTO ty_integral_rule ( id, integral_id, integral_source, small_source, integral_reward, remark, is_delete, create_time, update_time )
+        VALUES
+            (#{IntegralRuleEntity.id},
+             #{IntegralRuleEntity.integralId},
+             #{IntegralRuleEntity.integralSource},
+             #{IntegralRuleEntity.smallSource},
+             #{IntegralRuleEntity.integralReward},
+             #{IntegralRuleEntity.remark},
+             #{IntegralRuleEntity.isDelete},
+             #{IntegralRuleEntity.createTime},
+             #{IntegralRuleEntity.updateTime}
+
+            )
+    </insert>
+
+
+    <!--教师端查询全部积分规则 张艳伟-->
+    <select id="selectIntegralRule" resultType="com.tfjybj.typing.entity.IntegralRuleEntity">
+        SELECT
+            id AS id,
+            integral_source,
+            integral_reward,
+            small_source,
+            create_time
+        FROM
+            ty_integral_rule
+        WHERE
+            is_delete = 0
+    </select>
+
+    <!--根据等级查询积分规则 张艳伟-->
+    <select id="selectIntegralRuleByLevel" resultType="com.tfjybj.typing.entity.IntegralRuleEntity">
+        SELECT
+            small_source,
+            integral_source,
+            integral_reward,
+            create_time
+        FROM
+            ty_integral_rule
+        WHERE
+            small_source = #{IntegralRuleEntity.smallSource}
+          AND is_delete = 0
+        ORDER BY
+            create_time DESC
+    </select>
+
+    <!--删除 张艳伟-->
+    <update id="deleteIntegralRule">
+        UPDATE ty_integral_rule
+        SET is_delete = 1
+        WHERE
+            id=#{id}
+
+            ORDER BY
+	create_time DESC
+    </update>
+    <!--修改 张艳伟-->
+    <select id="updateIntegralRule"  resultType="java.lang.Boolean">
+        UPDATE `ty_integral_rule`
+        SET
+            small_source = #{IntegralRuleEntity.smallSource},
+            integral_source=#{IntegralRuleEntity.integralSource},
+            integral_reward=#{IntegralRuleEntity.integralReward}
+
+        WHERE
+           id=#{IntegralRuleEntity.id}
+          and is_delete=0
+    </select>
+
+</mapper>

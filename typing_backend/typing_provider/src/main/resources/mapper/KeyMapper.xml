@@ -1,0 +1,328 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="com.tfjybj.typing.provider.dao.KeyDao">
+    <!--插入键位练习数据-张艳伟-2021年10月1日-->
+    <insert id="insertKeyResult" parameterType="com.tfjybj.typing.entity.KeyEntity">
+        INSERT INTO ty_key(id,
+                           user_code,
+                           user_name,
+                           article_name,
+                           speed,
+                           right_rate,
+                           set_time,
+                           speed_progress,
+                           create_time,
+                           update_time)
+        VALUES (#{KeyEntity.id},
+                #{KeyEntity.userCode},
+                #{KeyEntity.userName},
+                #{KeyEntity.articleName},
+                #{KeyEntity.speed},
+                #{KeyEntity.rightRate},
+                #{KeyEntity.setTime},
+                #{KeyEntity.speedProgress},
+                #{KeyEntity.createTime},
+                #{KeyEntity.updateTime})
+    </insert>
+
+    <!--修改键位练习数据-->
+    <update id="updateKeyResult" parameterType="com.tfjybj.typing.entity.KeyEntity">
+        UPDATE ty_key
+        SET
+            article_name = #{KeyEntity.articleName},
+            speed = #{KeyEntity.speed},
+            right_rate = #{KeyEntity.rightRate},
+            set_time = #{KeyEntity.setTime},
+            speed_progress = #{KeyEntity.speedProgress},
+            update_time = #{KeyEntity.updateTime}
+        WHERE
+            id = #{KeyEntity.id}
+    </update>
+    <!--按照时间班级查询键位练习数据-张艳伟-2021年10月1日-->
+    <select id="selectKeyByTimeClass" resultType="com.tfjybj.typing.model.KeyModel">
+        SELECT DISTINCT
+            b.`create_time` AS time,
+	b.set_time,
+	b.user_code,
+	b.user_name,
+	t.team_name AS teamId,
+	b.article_name,
+	b.speed,
+	b.right_rate,
+	sum
+        FROM
+            (
+            SELECT
+            count( user_code ) AS sum,
+            a.user_code,
+            a.create_time,
+            a.set_time,
+            a.user_name,
+            a.team_id,
+            a.article_name,
+            a.speed,
+            a.right_rate
+            FROM
+            (
+            SELECT
+            i.user_code,
+            i.`create_time`,
+            i.user_name,
+            i.article_name,
+            i.speed,
+            i.right_rate,
+            i.set_time,
+            p.class_name,
+            i.id,
+            p.team_id
+            FROM
+            `ty_key` i
+            RIGHT JOIN `ty_person` p ON p.user_code = i.user_code
+            AND p.class_name = #{className}
+            WHERE
+            i.`create_time` BETWEEN #{beginTime}
+            AND #{endTime}
+            AND i.set_time != 0
+            ORDER BY
+            i.create_time DESC
+            ) a
+            GROUP BY
+            a.user_code
+            ) b
+            LEFT JOIN ty_team t ON b.team_id = t.team_id
+        ORDER BY
+            b.user_code
+    </select>
+<!--    按照学号时间查询每日键位练习时长-->
+    <select id="selectSetTimeByTime" resultType="com.tfjybj.typing.model.KeyModel">
+        SELECT
+            a.user_code,
+            a.user_name,
+            sum( set_time ) AS num,
+            a.create_day
+        FROM
+            (
+                SELECT
+                    user_code,
+                    user_name,
+                    set_time,
+                    create_time,
+                    DATE_FORMAT( ty.create_time, '%Y-%m-%d' ) AS create_day
+                FROM
+                    ty_key ty
+                WHERE
+                    is_delete = 0
+                  AND ty.user_code = #{userCode}
+                ORDER BY
+                    create_day DESC
+            ) a
+        WHERE
+            a.create_day = #{createTime}
+        GROUP BY
+            a.create_day
+    </select>
+
+<!--    按照学号查询键位练习总时长-->
+    <select id="selectTimeByUserCode" resultType="com.tfjybj.typing.model.KeyModel">
+        SELECT
+            IFNULL( a.num, '0' ) AS num
+        FROM
+            (
+                SELECT
+                    user_code,
+                    user_name,
+                    set_time,
+                    sum( set_time ) AS num,
+                    create_time
+                FROM
+                    ty_key ty
+                WHERE
+                    is_delete = 0
+                  AND ty.user_code = #{userCode}
+            ) a
+    </select>
+    <!--按照班级查询未参加键位练习数据-张艳伟-2021年10月10日-->
+    <select id="selectNotKeyByClass" resultType="com.tfjybj.typing.model.KeyModel">
+        SELECT
+            c.user_code,
+            c.user_name,
+            c.teamId,
+            tc.ding_id AS dingId
+        FROM
+            (
+                SELECT DISTINCT
+                    b.user_code,
+                    b.user_name,
+                    t.team_name AS teamId
+                FROM
+                    (
+                        SELECT
+                            P.user_code,
+                            i.`create_time`,
+                            P.user_name,
+                            i.article_name,
+                            i.speed,
+                            i.right_rate,
+                            i.set_time,
+                            p.class_name,
+                            i.id,
+                            p.team_id
+                        FROM
+                            `ty_person` p
+                                LEFT JOIN ( SELECT * FROM `ty_key` i WHERE i.create_time BETWEEN #{beginTime} AND #{endTime}
+                            ) i ON p.user_code = i.user_code
+                        WHERE
+                            p.class_name = #{className}
+
+                          AND ( i.user_code IS NULL OR ( i.user_code IS NOT NULL AND i.set_time = 0 ) )
+                        ORDER BY
+                            P.user_code DESC
+                    ) b
+                        LEFT JOIN ty_team t ON b.team_id = t.team_id
+                ORDER BY
+                    b.user_code
+            ) c
+                LEFT JOIN ( SELECT * FROM tb_user d
+--                 WHERE tenant_id = '9876543266688899999999'
+                    ) tc ON tc.user_code = c.user_code
+        WHERE
+            tc.ding_id IS NOT NULL
+    </select>
+
+    <!--按照时间查询键位练习数据-张艳伟-2021年10月1日-->
+    <select id="selectKeyByTime" resultType="com.tfjybj.typing.model.KeyModel">
+        SELECT DISTINCT
+            b.`create_time` AS time,
+	b.set_time,
+	b.user_code,
+	b.user_name,
+	t.team_name AS teamId,
+	b.article_name,
+	b.speed,
+	b.right_rate,
+	sum
+        FROM
+            (
+            SELECT
+            count( user_code ) AS sum,
+            a.user_code,
+            a.create_time,
+            a.set_time,
+            a.user_name,
+            a.team_id,
+            a.article_name,
+            a.speed,
+            a.right_rate
+            FROM
+            (
+            SELECT
+            i.user_code,
+            i.`create_time`,
+            i.user_name,
+            i.article_name,
+            i.speed,
+            i.right_rate,
+            i.set_time,
+            p.class_name,
+            i.id,
+            p.team_id
+            FROM
+            `ty_key` i
+            RIGHT JOIN `ty_person` p ON p.user_code = i.user_code
+            AND p.is_delete = 0
+            WHERE
+            i.`create_time` BETWEEN #{beginTime}
+            AND #{endTime}
+            AND i.set_time != 0
+            ORDER BY
+            i.create_time DESC
+            ) a
+            GROUP BY
+            a.user_code
+            ) b
+            LEFT JOIN ty_team t ON b.team_id = t.team_id
+        ORDER BY
+            b.user_code
+    </select>
+
+
+<!--    查询当前时间该学生是否有键位练习数据-->
+    <select id="selectKeyByTimeUserCode" resultType="com.tfjybj.typing.model.KeyModel">
+        SELECT
+            count(*) AS num
+        FROM
+            (
+                SELECT
+                    i.user_code,
+                    i.user_name,
+                    i.id
+                FROM
+                    `ty_key` i
+                WHERE
+                    i.`create_time` BETWEEN #{beginTime}
+                        AND #{endTime}
+                  AND i.user_code = #{userCode}
+                ORDER BY
+                    i.user_code DESC
+            ) a
+    </select>
+    <!--查詢全部未参与键位练习的人员-张艳伟-2021年10月1日-->
+    <select id="selectNotKey" resultType="com.tfjybj.typing.model.KeyModel">
+        SELECT
+            c.class_name,
+            c.user_code,
+            c.user_name,
+            c.teamId,
+            tc.ding_id AS dingId
+        FROM
+            (
+                SELECT DISTINCT
+                    b.class_name,
+                    b.user_code,
+                    b.user_name,
+                    t.team_name AS teamId
+                FROM
+                    (
+                        SELECT
+                            p.user_code,
+                            p.user_name,
+                            p.class_name,
+                            i.id,
+                            p.team_id
+                        FROM
+                            `ty_person` p
+                                LEFT JOIN ( SELECT * FROM `ty_key` i WHERE i.create_time BETWEEN #{beginTime} AND #{endTime}
+                            ) i ON p.user_code = i.user_code
+                        WHERE
+                            p.is_delete = 0
+                          AND ( i.user_code IS NULL OR ( i.user_code IS NOT NULL AND i.set_time = 0 ) )
+                        ORDER BY
+                            i.user_code DESC
+                    ) b
+                        LEFT JOIN ty_team t ON b.team_id = t.team_id
+                ORDER BY
+                    b.user_code
+            ) c
+                LEFT JOIN ( SELECT * FROM tb_user d
+-- WHERE tenant_id = '9876543266688899999999'
+                    ) tc ON tc.user_code = c.user_code
+        WHERE
+            tc.ding_id IS NOT NULL
+    </select>
+    <!--查询个人键位练习速度和正确率-宋文轩-2021年11月13日-->
+    <select id="selectPersonKeyRateAndSpeed" resultType="com.tfjybj.typing.model.KeyModel">
+        SELECT
+	        speed,
+            right_rate,
+            create_time
+        FROM
+            `ty_key`
+        WHERE
+            user_code = #{userCode} AND
+            speed != 0 AND
+            right_rate!= 0
+        ORDER BY
+	        create_time ASC
+    </select>
+</mapper>

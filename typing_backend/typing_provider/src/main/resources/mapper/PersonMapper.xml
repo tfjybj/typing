@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="com.tfjybj.typing.provider.dao.PersonDao">
+
+    <select id="selectPersonEntityByUserId" resultType="com.tfjybj.typing.entity.PersonEntity">
+        SELECT
+            id,
+            team_id,
+            user_code,
+            user_name,
+            class_name
+        FROM
+            ty_person
+        WHERE
+        is_delete = 0
+        AND user_code = #{userId}
+    </select>
+
+    <select id="selectTeamByUserId" resultMap="teamIntegralMap">
+        SELECT
+            i.total_grade,
+            a.id,
+            a.team_id,
+            a.user_name
+        FROM
+            ty_integral i
+            RIGHT JOIN (
+            SELECT
+                id,
+                team_id,
+                user_name
+            FROM
+                `ty_person`
+            WHERE
+                team_id =(
+                SELECT
+                    team_id
+                FROM
+                    `ty_person`
+                WHERE
+                    id = #{userId}
+
+                    AND is_delete = 0
+                )) a ON i.user_id = a.id
+            AND i.is_delete =0
+    </select>
+
+    <resultMap id="teamIntegralMap" type="com.tfjybj.typing.model.TeamIntegralModel">
+        <result property="totalGrade" column="total_grade"></result>
+        <result property="userName" column="user_name"></result>
+        <result property="id" column="id"></result>
+        <result property="teamId" column="team_id"></result>
+    </resultMap>
+
+
+</mapper>

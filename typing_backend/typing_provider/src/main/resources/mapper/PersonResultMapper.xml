@@ -1,0 +1,1212 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="com.tfjybj.typing.provider.dao.PersonResultDao">
+    <!--根据PersonResult文章名称模糊查询PersonResultEntity-->
+    <select id="queryLikeArticleName" resultType="com.tfjybj.typing.entity.PersonResultEntity">
+        SELECT
+        *
+        FROM
+        person_result f
+        WHERE
+        f.is_delete = 0
+        <if test="articleName !=''">
+            <bind name="pattern" value="'%' + articleName + '%'"/>
+            AND f.article_name LIKE #{pattern}
+        </if>
+        ORDER BY
+        f.create_time DESC
+    </select>
+
+
+    <!--分页查询个人所有成绩  王闯-->
+    <select id="selectPersonResult" resultType="com.tfjybj.typing.entity.PersonResultEntity">
+        SELECT create_time,
+               article_name,
+               set_time,
+               speed,
+               right_rate
+        FROM person_result
+        WHERE user_id = #{user_id}
+        Order By `create_time` Desc
+    </select>
+
+
+    <insert id="insertPersonResult" parameterType="com.tfjybj.typing.entity.PersonResultEntity">
+        INSERT INTO person_result(id,
+                                  article_name,
+                                  user_id,
+                                  user_name,
+                                  words,
+                                  right_words,
+                                  speed,
+                                  right_rate,
+                                  set_time,
+                                  real_time)
+        VALUES (#{personResultEntity.id},
+                #{personResultEntity.articleName},
+                #{personResultEntity.userId},
+                #{personResultEntity.userName},
+                #{personResultEntity.words},
+                #{personResultEntity.rightWords},
+                #{personResultEntity.speed},
+                #{personResultEntity.rightRate},
+                #{personResultEntity.setTime},
+                #{personResultEntity.realTime})
+    </insert>
+
+    <!--查询最近一次该用户的打字结果-->
+    <select id="selectOneNewPersonResultById" resultType="com.tfjybj.typing.entity.PersonResultEntity">
+        SELECT user_id,
+               speed,
+               right_rate
+        FROM `person_result`
+        WHERE user_id = #{userId}
+        order BY create_time DESC LIMIT 1
+    </select>
+
+    <!--查询个人打字速度以及正确率     @author：Yara-->
+    <select id="selectPersonRAS" resultType="com.tfjybj.typing.entity.PersonResultEntity">
+        SELECT speed,
+               right_rate,
+               create_time
+        FROM `person_result`
+        WHERE user_id = #{user_id}
+        Order By create_time Asc
+
+    </select>
+
+    <select id="selectPersonRateAndSpeedAVG" resultType="com.tfjybj.typing.model.PersonResultModel">
+        SELECT
+            a.speed,
+            a.right_rate,
+            a.create_time,
+            avg( a.speed ) AS speedAvg,
+            avg( a.right_rate ) AS rightRateAvg
+        FROM
+            (
+                SELECT
+                    speed,
+                    right_rate,
+                    create_time
+                FROM
+                    `person_result`
+                WHERE
+                        user_id =(
+                        SELECT
+                            tp.id
+                        FROM
+                            ty_person tp
+                        WHERE
+                            user_code = #{userCode}
+
+                    )
+                ORDER BY
+                    create_time DESC
+            ) a
+
+    </select>
+
+    <!--进步排行-->
+    <select id="selectPersonProgress" resultType="com.tfjybj.typing.model.PersonProgress">
+        SELECT DISTINCT
+        z.`level` AS ratingName,
+        z.total_grade AS score,
+        z.article_name AS articleName,
+        z.user_name AS userName,
+        z.user_id As userId,
+        z.speed AS speed,
+        z.right_rate AS rightRate
+        FROM
+        (
+        SELECT
+        i.level,
+        i.total_grade ,
+        p.article_name ,
+        p.user_name ,
+        p.speed ,
+        p.right_rate,
+        p.user_id
+        FROM
+        `ty_integral` i
+        LEFT JOIN (
+        SELECT
+        *
+        FROM
+        ( SELECT article_name, user_id, user_name, speed, right_rate FROM `person_result` ORDER BY create_time DESC ) a
+        GROUP BY
+        a.user_id
+        ) p ON i.user_id = p.user_id
+        WHERE
+        i.total_grade &lt;&gt; 0
+        AND i.total_grade IS NOT NULL
+        AND i.is_delete = 0
+        ORDER BY
+        total_grade DESC
+        ) z
+        <if test="flag==1">
+            RIGHT JOIN `ty_person` x ON z.user_id = x.id
+            WHERE
+            z.`level` IS NOT NULL
+        </if>
+    </select>
+    <!--根据班级查询英雄排行-张艳伟-2021年9月20日-->
+    <select id="selectPersonClassProgress" resultType="com.tfjybj.typing.model.PersonProgress">
+        SELECT DISTINCT
+                        z.`level`      AS ratingName,
+               z.total_grade  AS score,
+               z.article_name AS articleName,
+               z.user_name    AS userName,
+               z.user_id      AS userId,
+               z.speed        AS speed,
+               z.right_rate   AS rightRate,
+                t.team_name as team_id,
+               z.class_name
+        FROM (
+                 SELECT i.`level`,
+                        i.total_grade,
+                        p.article_name,
+                        p.user_name,
+                        p.speed,
+                        p.right_rate,
+                        p.user_id,
+                        p.team_id,
+                        p.class_name
+                 FROM `ty_integral` i
+                          RIGHT JOIN (
+                     SELECT *
+                     FROM (
+                              SELECT article_name,
+                                     user_id,
+                                     user_name,
+                                     speed,
+                                     right_rate,
+                                     p.team_id,
+                                     p.class_name
+                              FROM (
+                                       SELECT pr.speed,
+                                              pr.article_name,
+                                              pr.user_name,
+                                              pr.right_rate,
+                                              pr.user_id,
+                                              pr.create_time,
+                                              tp.team_id,
+                                              tp.class_name
+                                       FROM person_result pr
+                                                LEFT JOIN ty_person tp ON pr.user_id = tp.id
+                                       WHERE tp.class_name = #{className}
+                                   ) p
+                              ORDER BY create_time DESC
+                          ) a
+                     GROUP BY a.user_id
+                 ) p ON i.user_id = p.user_id
+                 WHERE i.total_grade &lt;&gt; 0
+                   AND i.total_grade IS NOT NULL
+                   AND i.is_delete = 0
+
+             ) z
+             LEFT JOIN ty_team t on z.team_id=t.team_id
+        ORDER BY total_grade DESC
+    </select>
+
+    <!--根据班级查询进步排行班级模糊查询-张艳伟-2021年9月27日-->
+    <select id="selectPersonClassProgressClass" resultType="com.tfjybj.typing.model.PersonProgress">
+        SELECT DISTINCT
+                        z.`level`      AS ratingName,
+               z.total_grade  AS score,
+               z.article_name AS articleName,
+               z.user_name    AS userName,
+               z.user_id      AS userId,
+               z.speed        AS speed,
+               z.right_rate   AS rightRate,
+               t.team_name as team_id,
+               z.class_name
+        FROM (
+                 SELECT i.`level`,
+                        i.total_grade,
+                        p.article_name,
+                        p.user_name,
+                        p.speed,
+                        p.right_rate,
+                        p.user_id,
+                        p.team_id,
+                        p.class_name
+                 FROM `ty_integral` i
+                          RIGHT JOIN (
+                     SELECT *
+                     FROM (
+                              SELECT article_name,
+                                     user_id,
+                                     user_name,
+                                     speed,
+                                     right_rate,
+                                     p.team_id,
+                                     p.class_name
+                              FROM (
+                                       SELECT pr.speed,
+                                              pr.article_name,
+                                              pr.user_name,
+                                              pr.right_rate,
+                                              pr.user_id,
+                                              pr.create_time,
+                                              tp.team_id,
+                                              tp.class_name
+                                       FROM person_result pr
+                                                LEFT JOIN ty_person tp ON pr.user_id = tp.id
+                                       WHERE
+--                                              tp.class_name like '%21级%'
+                                          tp.is_delete = 0
+                                   ) p
+                              ORDER BY create_time DESC
+                          ) a
+                     GROUP BY a.user_id
+                 ) p ON i.user_id = p.user_id
+                 WHERE i.total_grade &lt;&gt; 0
+                   AND i.total_grade IS NOT NULL
+                   AND i.is_delete = 0
+
+             ) z
+             LEFT JOIN ty_team t on z.team_id=t.team_id
+        ORDER BY total_grade DESC
+    </select>
+
+
+    <!--根据分组查询进步排行-张艳伟-2021年9月20日-->
+    <select id="selectPersonTeamProgress" resultType="com.tfjybj.typing.model.PersonProgress">
+        SELECT DISTINCT z.`level`      AS ratingName,
+               z.total_grade  AS score,
+               z.article_name AS articleName,
+               z.user_name    AS userName,
+               z.user_id      AS userId,
+               z.speed        AS speed,
+               z.right_rate   AS rightRate,
+               z.class_name,
+               t.team_name as team_id
+        FROM (
+                 SELECT i.`level`,
+                        i.total_grade,
+                        p.article_name,
+                        p.user_name,
+                        p.speed,
+                        p.right_rate,
+                        p.user_id,
+                        p.class_name,
+                        p.team_id
+                 FROM `ty_integral` i
+                          RIGHT JOIN (
+                     SELECT *
+                     FROM (
+                              SELECT article_name,
+                                     user_id,
+                                     user_name,
+                                     speed,
+                                     right_rate,
+                                     p.class_name,
+                                     p.team_id
+                              FROM (
+                                       SELECT pr.speed,
+                                              pr.article_name,
+                                              pr.user_name,
+                                              pr.right_rate,
+                                              pr.user_id,
+                                              pr.create_time,
+                                              tp.class_name,
+                                              tp.team_id
+                                       FROM person_result pr
+                                                LEFT JOIN ty_person tp ON pr.user_id = tp.id
+                                       WHERE tp.team_id = #{teamId}
+                                       and tp.class_name=#{className}
+                                   ) p
+                              ORDER BY create_time DESC
+                          ) a
+                     GROUP BY a.user_id
+                 ) p ON i.user_id = p.user_id
+                 WHERE i.total_grade &lt;&gt; 0
+                   AND i.total_grade IS NOT NULL
+                   AND i.is_delete = 0
+
+             ) z
+             LEFT JOIN ty_team t on z.team_id=t.team_id
+        ORDER BY total_grade DESC
+    </select>
+
+
+    <!--整体排行-->
+    <select id="selectPersonRanking" resultType="com.tfjybj.typing.model.PersonProgress">
+        SELECT DISTINCT
+        z.`level` AS ratingName,
+        z.progress_grade AS score,
+        z.article_name AS articleName,
+        z.user_name AS userName,
+        z.user_id AS userId,
+        z.speed AS speed,
+        z.right_rate AS rightRate
+
+        FROM
+        (
+        SELECT
+        i.`level`,
+        i.progress_grade,
+        p.article_name,
+        p.user_name,
+        p.speed,
+        p.right_rate,
+        p.user_id
+        FROM
+        `ty_integral` i
+        LEFT JOIN (
+        SELECT
+        *
+        FROM
+        ( SELECT article_name, user_id, user_name, speed, right_rate FROM `person_result` ORDER BY create_time DESC ) a
+        GROUP BY
+        a.user_id
+        ) p ON i.user_id = p.user_id
+        WHERE
+        i.progress_grade &lt;&gt; 0
+        AND i.progress_grade IS NOT NULL
+        AND i.is_delete = 0
+        ORDER BY
+        i.progress_grade DESC
+        ) z
+
+        <if test="flag==1">
+            RIGHT JOIN `ty_person` x ON z.user_id = x.id
+            WHERE
+            z.`level` IS NOT NULL
+        </if>
+    </select>
+
+    <!--根据班级查询进步英雄榜排行榜-张艳伟-2021年9月20日-->
+    <select id="selectPersonClassRanking" resultType="com.tfjybj.typing.model.PersonProgress">
+        SELECT DISTINCT
+        a.`level` AS ratingName,
+        a.progress_grade AS score,
+        a.article_name AS articleName,
+        a.user_name AS userName,
+        a.user_id AS userId,
+        a.speed AS speed,
+        a.right_rate AS rightRate,
+        a.team_name AS teamId,
+        a.class_name,
+        l.remark,
+        a.grade
+        FROM
+        (
+        SELECT
+        z.`level`,
+        z.progress_grade,
+        z.article_name,
+        z.user_name,
+        z.speed,
+        z.right_rate,
+        z.user_id,
+        t.team_id,
+        t.team_name,
+        z.class_name,
+        z.grade
+        FROM
+        (
+        SELECT
+        *
+        FROM
+        (
+        SELECT
+        i.`level`,
+        i.progress_grade,
+        p.article_name,
+        p.user_name,
+        p.speed,
+        p.right_rate,
+        p.user_id,
+        team_id,
+        p.class_name,
+        i.progress_grade /(
+        i.total_grade - i.progress_grade
+        ) * 100 AS grade
+        FROM
+        `ty_integral` i
+        RIGHT JOIN (
+        SELECT
+        *
+        FROM
+        (
+        SELECT
+        p.article_name,
+        p.user_id,
+        p.user_name,
+        p.speed,
+        p.right_rate,
+        p.class_name,
+        p.team_id
+        FROM
+        (
+        SELECT
+        pr.speed,
+        pr.article_name,
+        pr.user_name,
+        pr.right_rate,
+        pr.user_id,
+        pr.create_time,
+        tp.class_name,
+        tp.team_id
+        FROM
+        person_result pr
+        LEFT JOIN ty_person tp ON pr.user_id = tp.id
+        WHERE
+        tp.class_name = #{className}
+        ) p
+        ORDER BY
+        create_time DESC
+        ) a
+        GROUP BY
+        a.user_id
+        ) p ON i.user_id = p.user_id
+        WHERE
+        i.progress_grade &lt;&gt; 0
+        AND i.progress_grade IS NOT NULL
+        AND i.is_delete = 0
+        ) b
+        WHERE
+        b.grade &lt;&gt; 0
+        AND b.grade IS NOT NULL
+        ) z
+        LEFT JOIN ty_team t ON z.team_id = t.team_id
+        ) a
+        LEFT JOIN ty_level l ON l.`level` = a.`level`
+        ORDER BY
+        l.remark DESC
+    </select>
+
+    <!--根据班级查询排行榜，班级模糊查询-张艳伟-2021年9月27日-->
+    <select id="selectPersonClassRankingClass" resultType="com.tfjybj.typing.model.PersonProgress">
+        SELECT DISTINCT
+        a.`level` AS ratingName,
+        a.progress_grade AS score,
+        a.grade,
+        a.article_name AS articleName,
+        a.user_name AS userName,
+        a.user_id AS userId,
+        a.speed AS speed,
+        a.right_rate AS rightRate,
+        a.team_name AS teamId,
+        a.class_name,
+        l.remark
+        FROM
+        (
+        SELECT
+        z.`level`,
+        z.progress_grade,
+        z.article_name,
+        z.user_name,
+        z.speed,
+        z.right_rate,
+        z.user_id,
+        t.team_id,
+        t.team_name,
+        z.class_name,
+        z.grade
+        FROM
+        (
+        SELECT
+        *
+        FROM
+        (
+        SELECT
+        i.`level`,
+        i.progress_grade,
+        i.total_grade,
+        p.article_name,
+        p.user_name,
+        p.speed,
+        p.right_rate,
+        p.user_id,
+        team_id,
+        p.class_name,
+        i.progress_grade /(i.total_grade - i.progress_grade ) *100  AS grade
+        FROM
+        `ty_integral` i
+        RIGHT JOIN (
+        SELECT
+        *
+        FROM
+        (
+        SELECT
+        p.article_name,
+        p.user_id,
+        p.user_name,
+        p.speed,
+        p.right_rate,
+        p.class_name,
+        p.team_id
+        FROM
+        (
+        SELECT
+        pr.speed,
+        pr.article_name,
+        pr.user_name,
+        pr.right_rate,
+        pr.user_id,
+        pr.create_time,
+        tp.class_name,
+        tp.team_id
+        FROM
+        person_result pr
+        LEFT JOIN ty_person tp ON pr.user_id = tp.id
+        WHERE
+--         tp.class_name LIKE '%21级%'
+           tp.is_delete = 0
+        ) p
+        ORDER BY
+        create_time DESC
+        ) a
+        GROUP BY
+        a.user_id
+        ) p ON i.user_id = p.user_id
+        WHERE
+        i.progress_grade &lt;&gt; 0
+        AND i.progress_grade IS NOT NULL
+        AND i.is_delete = 0
+        ) b
+        WHERE
+        b.grade &lt;&gt; 0
+        AND b.grade IS NOT NULL
+        ) z
+        LEFT JOIN ty_team t ON z.team_id = t.team_id
+        ) a
+        LEFT JOIN ty_level l ON l.`level` = a.`level`
+        ORDER BY
+        l.remark DESC
+    </select>
+    <!--根据分组查询排行榜-张艳伟-2021年9月20日-->
+    <select id="selectPersonTeamRanking" resultType="com.tfjybj.typing.model.PersonProgress">
+        SELECT DISTINCT
+        z.`level` AS ratingName,
+        z.progress_grade AS score,
+        z.article_name AS articleName,
+        z.user_name AS userName,
+        z.user_id AS userId,
+        z.speed AS speed,
+        z.right_rate AS rightRate,
+        t.team_name AS team_id,
+        z.class_name,
+        z.grade
+        FROM
+        (
+        SELECT
+        *
+        FROM
+        (
+        SELECT
+        i.`level`,
+        i.progress_grade,
+        p.article_name,
+        p.user_name,
+        p.speed,
+        p.right_rate,
+        p.user_id,
+        p.team_id,
+        p.class_name,
+        i.progress_grade /(
+        i.total_grade - i.progress_grade
+        ) * 100 AS grade
+        FROM
+        `ty_integral` i
+        RIGHT JOIN (
+        SELECT
+        *
+        FROM
+        (
+        SELECT
+        article_name,
+        user_id,
+        user_name,
+        speed,
+        right_rate,
+        p.class_name,
+        p.team_id
+        FROM
+        (
+        SELECT
+        pr.speed,
+        pr.article_name,
+        pr.user_name,
+        pr.right_rate,
+        pr.user_id,
+        pr.create_time,
+        tp.class_name,
+        tp.team_id
+        FROM
+        person_result pr
+        LEFT JOIN ty_person tp ON pr.user_id = tp.id
+        WHERE
+        tp.team_id = #{teamId}
+        AND tp.class_name = #{className}
+        ) p
+        ORDER BY
+        create_time DESC
+        ) a
+        GROUP BY
+        a.user_id
+        ) p ON i.user_id = p.user_id
+        WHERE
+        i.progress_grade &lt;&gt; 0
+        AND i.progress_grade IS NOT NULL
+        AND i.is_delete = 0
+        ) b
+        WHERE
+        b.grade &lt;&gt;  0
+        AND b.grade IS NOT NULL
+        ) z
+        LEFT JOIN ty_team t ON z.team_id = t.team_id
+        ORDER BY
+        z.progress_grade DESC
+
+    </select>
+
+    <!--查询没有播报的记录-->
+    <select id="selectNoReport" resultType="com.tfjybj.typing.model.ImproveReportModel">
+        select user_name,
+               level,
+               user_id
+        from `ty_improve_report`
+        where is_query = 0
+          And is_delete = 0 LIMIT 10
+    </select>
+
+    <update id="UpdateImprovement" parameterType="com.tfjybj.typing.model.ImproveReportModel">
+        update
+        ty_improve_report
+        set
+        is_query=1
+        where
+        user_id
+        in
+        (
+        <foreach collection="list" item="ImproveReportModel" separator=",">
+            #{ImproveReportModel.userId}
+        </foreach>
+        )
+    </update>
+    <select id="selectClassLevelCount" resultType="com.tfjybj.typing.model.ClassLevelCountModel">
+<!--        SELECT p.`class_name` AS `className`,-->
+<!--               i.`level`      AS `level`,-->
+<!--               count(*)       AS `count`-->
+<!--        FROM `ty_person` AS p-->
+<!--                 LEFT JOIN `ty_integral` AS i ON p.id = i.user_id-->
+<!--        WHERE i.`is_delete` = 0-->
+<!--            and p.`is_delete` = 0-->
+<!--&#45;&#45;             and p.`class_name` like '%21级%'-->
+<!--        <if test="className!=null and className.size() > 0">-->
+<!--            and p.`class_name` in <foreach item="item" collection="className" index="index" open="(" separator="," close=")">#{item}</foreach>-->
+<!--        </if>-->
+<!--        GROUP BY p.`class_name`,-->
+<!--                 i.`level`-->
+
+        -- 四个饼状图 修改代码，查询等级最高的数据，之前是查询最近一次打字的数据
+        SELECT
+        count(*) AS `count`,
+        d.className,
+        d.LEVEL
+        FROM
+        (
+        SELECT
+        p.`class_name` AS `className`,
+        IFNULL( c.LEVEL, '小白键盘手' ) AS LEVEL
+        FROM
+        `ty_person` AS p
+        LEFT JOIN (
+        SELECT
+        *
+        FROM
+        (
+        SELECT DISTINCT
+        i.user_id,
+        i.user_name,
+        i.`level`,
+        a.remark
+        FROM
+        `ty_integral` AS i
+        LEFT JOIN ( SELECT * FROM ty_level AS l ORDER BY l.remark DESC ) a ON a.`level` = i.`level`
+        ORDER BY
+        user_name,
+        a.remark DESC
+        ) b
+        GROUP BY
+        user_name
+        ) c ON p.id = c.user_id
+        WHERE
+        p.`is_delete` = 0
+        <if test="className!=null and className.size() > 0">
+                   and p.`class_name` in <foreach item="item" collection="className" index="index" open="(" separator="," close=")">#{item}</foreach>
+                </if>
+        ) d
+        GROUP BY
+        d.className,
+        d.LEVEL
+    </select>
+
+
+    <select id="selectRiseCount" resultType="com.tfjybj.typing.model.RiseCountModel" parameterType="string">
+        SELECT
+        `level`,
+        class_name,
+        p.user_name
+        FROM
+        ty_person p
+        LEFT JOIN ty_integral i ON p.id = i.user_id
+        WHERE
+        DATE_FORMAT( i.create_time, '%m-%d-%Y' ) = DATE_FORMAT( now(), '%m-%d-%Y' )
+        AND p.is_delete =0
+        <if test="userId != null and userId != ''">
+            and user_id= #{userId} and is_delete=0
+        </if>
+        <if test="userId == null and userId != ''">
+            GROUP BY
+            class_name,
+            user_name,
+            `level`
+        </if>
+    </select>
+
+    <resultMap id="selectRiseCountMap" type="com.tfjybj.typing.model.RiseCountModel">
+        <result column="level" property="level"></result>
+        <result column="class_name" property="className"></result>
+        <result column="user_name" property="userName"></result>
+    </resultMap>
+
+
+    <select id="selectRankingByTimeLevel" resultType="com.tfjybj.typing.model.PersonRankingModel">
+        SELECT DISTINCT a.`create_time`,
+               a.user_name,
+               a.total_grade AS integral,
+               a.class_name,
+               a.`level`,
+               t.team_name as team_id
+        FROM (
+                 SELECT i.`user_id`,
+                        i.`create_time`,
+                        i.user_name,
+                        i.total_grade,
+                        i.id,
+                        i.`level`,
+                        p.class_name,
+                        p.team_id
+                 FROM `ty_integral` i
+                          RIGHT JOIN `ty_person` p ON p.id = i.user_id and p.class_name = #{className}
+                 WHERE i.`create_time` BETWEEN #{beginTime}
+                     AND #{endTime}
+
+                   AND `level` = #{level}
+
+                 ORDER BY i.total_grade DESC
+             ) a
+             LEFT JOIN ty_team t on a.team_id=t.team_id
+        GROUP BY a.user_id
+        ORDER BY a.total_grade DESC
+    </select>
+    <!--按照条件查询排行，班级模糊查询-张艳伟-2021年9月26日-->
+    <select id="selectRankingByTimeLevelClass" resultType="com.tfjybj.typing.model.PersonRankingModel">
+        SELECT DISTINCT a.`create_time`,
+        a.user_name,
+        a.total_grade AS integral,
+        a.class_name,
+        a.`level`,
+       t.team_name as team_id
+        FROM (
+        SELECT i.`user_id`,
+        i.`create_time`,
+        i.user_name,
+        i.total_grade,
+        i.id,
+        i.`level`,
+        p.class_name,
+        p.team_id
+        FROM `ty_integral` i
+        RIGHT JOIN `ty_person` p ON p.id = i.user_id
+--         and p.class_name like '%21级%'
+            AND p.is_delete = 0
+        WHERE i.`create_time` BETWEEN #{beginTime}
+        AND #{endTime}
+
+        AND `level` = #{level}
+
+        ORDER BY i.total_grade DESC
+        ) a
+        LEFT JOIN ty_team t on a.team_id=t.team_id
+        GROUP BY a.user_id
+        ORDER BY a.total_grade DESC
+    </select>
+
+    <!--按照时间查询班级全部排行-张艳伟-2021年9月22日-->
+    <select id="selectRankingByTimeLevelAll" resultType="com.tfjybj.typing.model.PersonRankingModel">
+        SELECT DISTINCT a.`create_time`,
+               a.user_name,
+               a.total_grade AS integral,
+               a.class_name,
+               a.`level`,
+               t.team_name as team_id
+        FROM (
+                 SELECT i.`user_id`,
+                        i.`create_time`,
+                        i.user_name,
+                        i.total_grade,
+                        p.class_name,
+                        i.id,
+                        i.`level`,
+                        p.team_id
+                 FROM `ty_integral` i
+                          RIGHT JOIN `ty_person` p ON p.id = i.user_id
+                     AND p.class_name = #{className}
+                 WHERE i.`create_time` BETWEEN #{beginTime}
+                           AND #{endTime}
+                 ORDER BY i.total_grade DESC
+             ) a
+             LEFT JOIN ty_team t on a.team_id=t.team_id
+        GROUP BY a.user_id
+        ORDER BY a.total_grade DESC
+    </select>
+    <!--按照时间查询全部排行-班级模糊查询-张艳伟-2021年9月26日-->
+    <select id="selectRankingByTimeLevelAllClass" resultType="com.tfjybj.typing.model.PersonRankingModel">
+        SELECT DISTINCT a.`create_time`,
+               a.user_name,
+               a.total_grade AS integral,
+               a.class_name,
+               a.`level`,
+               t.team_name as team_id
+        FROM (
+                 SELECT i.`user_id`,
+                        i.`create_time`,
+                        i.user_name,
+                        i.total_grade,
+                        p.class_name,
+                        i.id,
+                        i.`level`,
+                        p.team_id
+                 FROM `ty_integral` i
+                          RIGHT JOIN `ty_person` p ON p.id = i.user_id
+--                      AND p.class_name like '%21级%'
+                     AND p.is_delete = 0
+                 WHERE i.`create_time` BETWEEN #{beginTime}
+                           AND #{endTime}
+                 ORDER BY i.total_grade DESC
+             ) a
+             LEFT JOIN ty_team t on a.team_id=t.team_id
+        GROUP BY a.user_id
+        ORDER BY a.total_grade DESC
+    </select>
+    <select id="selectImproved" resultType="com.tfjybj.typing.model.PersonRankingModel">
+        SELECT DISTINCT
+            b.user_code,
+            b.user_name,
+            b.createDate,
+            b.team_id,
+            t.team_name,
+            b.speed,
+            b.words
+        FROM
+            (
+                SELECT
+                    a.user_code,
+                    a.user_name,
+                    a.team_id,
+                    a.createDate,
+                    a.speed,
+                    a.words
+                FROM
+                    (
+                        SELECT
+                            p.user_code,
+                            i.words,
+                            i.user_name,
+                            i.speed,
+                            i.create_time,
+                            DATE_FORMAT( i.`create_time`, '%Y-%m-%d' ) AS createDate,
+                            i.right_rate,
+                            p.class_name,
+                            i.id,
+                            p.team_id
+                        FROM
+                            person_result i
+                                RIGHT JOIN `ty_person` p ON p.id = i.user_id
+--                                 AND p.class_name LIKE '%21级%'
+                                AND p.is_delete = 0
+                        WHERE
+                            i.words IS NOT NULL
+                          AND i.`create_time` BETWEEN #{beginTime}
+                            AND #{endTime}
+                        ORDER BY
+                            p.user_code DESC
+                    ) a
+                ORDER BY
+                    a.user_code DESC
+
+            ) b
+                LEFT JOIN ty_team t ON b.team_id = t.team_id
+        ORDER BY
+            b.user_code
+    </select>
+    <select id="selectAllImproved" resultType="com.tfjybj.typing.model.PersonRankingModel">
+        SELECT DISTINCT
+            b.user_code,
+            b.user_name,
+            b.team_id,
+            t.team_name,
+            b.sum
+        FROM
+            (
+                SELECT
+                    a.user_code,
+                    a.user_name,
+                    a.team_id,
+                    count( a.user_code ) AS sum
+                FROM
+                    (
+                        SELECT
+                            p.user_code,
+                            i.words,
+                            i.user_name,
+                            i.speed,
+                            i.create_time,
+                            DATE_FORMAT( i.`create_time`, '%Y-%m-%d' ) AS createDate,
+                            i.right_rate,
+                            p.class_name,
+                            i.id,
+                            p.team_id
+                        FROM
+                            person_result i
+                                RIGHT JOIN `ty_person` p ON p.id = i.user_id
+                                AND p.is_delete = 0
+                        WHERE
+                            i.words IS NOT NULL
+                          AND i.`create_time` BETWEEN #{beginTime}
+                            AND #{endTime}
+                        ORDER BY
+                            p.user_code DESC
+                    ) a
+                GROUP BY
+                    a.user_code
+                ORDER BY
+                    a.user_code DESC
+            ) b
+                LEFT JOIN ty_team t ON b.team_id = t.team_id
+        ORDER BY
+            b.user_code
+    </select>
+
+    <select id="selectNumByTime" resultType="com.tfjybj.typing.model.PersonResultModel">
+        SELECT
+            count(*) as num
+        FROM
+            (
+                SELECT DISTINCT
+                    i.words,
+                    i.user_name,
+                    i.speed,
+                    i.create_time
+                FROM
+                    person_result i
+                WHERE
+                    i.`create_time` BETWEEN #{beginTime}
+                        AND #{endTime}
+                  AND user_id =(
+                    SELECT
+                        id
+                    FROM
+                        ty_person p
+                    WHERE
+                        p.user_code = #{userCode})
+                      AND i.words IS NULL
+                ) a
+    </select>
+
+
+    <select id="selectImprovedByClass" resultType="com.tfjybj.typing.model.PersonRankingModel">
+        SELECT DISTINCT
+            b.user_code,
+            b.user_name,
+            b.createDate,
+            b.team_id,
+            t.team_name,
+            b.speed,
+            b.words
+        FROM
+            (
+                SELECT
+                    a.user_code,
+                    a.user_name,
+                    a.team_id,
+                    a.createDate,
+                    a.speed,
+                    a.words
+                FROM
+                    (
+                        SELECT
+                            p.user_code,
+                            i.words,
+                            i.user_name,
+                            i.speed,
+                            i.create_time,
+                            DATE_FORMAT( i.`create_time`, '%Y-%m-%d' ) AS createDate,
+                            i.right_rate,
+                            p.class_name,
+                            i.id,
+                            p.team_id
+                        FROM
+                            person_result i
+                                RIGHT JOIN `ty_person` p ON p.id = i.user_id
+                                AND p.class_name =#{className}
+                        WHERE
+                            i.words IS NOT NULL
+                          AND i.`create_time` BETWEEN #{beginTime}
+                            AND #{endTime}
+                        ORDER BY
+                            p.user_code DESC
+                    ) a
+                ORDER BY
+                    a.user_code DESC
+
+            ) b
+                LEFT JOIN ty_team t ON b.team_id = t.team_id
+        ORDER BY
+            b.user_code
+    </select>
+<!--    教师端按照时间和班级查询助力总次数-张艳伟-2021年11月13日20:20:20-->
+    <select id="selectAllImprovedByClass" resultType="com.tfjybj.typing.model.PersonRankingModel">
+        SELECT DISTINCT
+            b.user_code,
+            b.user_name,
+            b.team_id,
+            t.team_name,
+            b.sum
+        FROM
+            (
+                SELECT
+                    a.user_code,
+                    a.user_name,
+                    a.team_id,
+                    count( a.user_code ) AS sum
+                FROM
+                    (
+                        SELECT
+                            p.user_code,
+                            i.words,
+                            i.user_name,
+                            i.speed,
+                            i.create_time,
+                            DATE_FORMAT( i.`create_time`, '%Y-%m-%d' ) AS createDate,
+                            i.right_rate,
+                            p.class_name,
+                            i.id,
+                            p.team_id
+                        FROM
+                            person_result i
+                                RIGHT JOIN `ty_person` p ON p.id = i.user_id
+                                AND p.class_name=#{className}
+                        WHERE
+                            i.words IS NOT NULL
+                          AND i.`create_time` BETWEEN #{beginTime}
+                            AND #{endTime}
+                        ORDER BY
+                            p.user_code DESC
+                    ) a
+                GROUP BY
+                    a.user_code
+                ORDER BY
+                    a.user_code DESC
+            ) b
+                LEFT JOIN ty_team t ON b.team_id = t.team_id
+        ORDER BY
+            b.user_code
+    </select>
+
+    <select id="selectImprovedByTime" resultType="java.lang.Integer">
+        SELECT
+	        count(words)
+        FROM
+	        `person_result`
+	    Where user_id =#{userId}
+	    and  create_time BETWEEN #{beginTime} and #{endTime}
+    </select>
+
+    <!--根据学号查询班级前三名-张艳伟-2021年10月11日-->
+    <select id="selectClassTop" resultType="com.tfjybj.typing.model.PersonRankingModel">
+        SELECT
+            *
+        FROM
+            (
+                SELECT
+                    *
+                FROM
+                    (
+                        SELECT
+                            pr.total_grade AS integral,
+                            pr.user_name,
+                            pr.user_id,
+                            tp.class_name
+                        FROM
+                            ty_integral pr
+                                LEFT JOIN ty_person tp ON pr.user_id = tp.id
+                        WHERE
+                                tp.class_name = ( SELECT class_name FROM ty_person tp WHERE tp.user_code = #{userCode} )
+                    ) p
+                ORDER BY
+                    p.integral DESC
+            ) a
+        GROUP BY
+            a.user_id
+        ORDER BY
+            a.integral DESC
+            LIMIT 0,3
+    </select>
+
+    <!--根据学号查询班级内小组前三名-张艳伟-2021年10月11日-->
+    <select id="selectTeamTop" resultType="com.tfjybj.typing.model.TeamRankingModel">
+        SELECT
+            t.team_id AS teamId,
+            GROUP_CONCAT(
+                DISTINCT CONCAT_WS( ",", p.`user_name` )) AS userNames,
+            t.team_name AS teamName,
+            t.group_results AS teamGrade,
+            p.class_name AS className
+        FROM
+            `ty_person` p
+                RIGHT JOIN `ty_team` t ON p.team_id = t.team_id
+        WHERE
+            t.is_delete = 0
+          AND p.is_delete = 0
+          and class_name= ( SELECT class_name FROM ty_person tp WHERE tp.user_code = #{userCode})
+        GROUP BY
+            t.team_id
+        ORDER BY
+            t.group_results DESC LIMIT 0,3
+    </select>
+
+
+    <select id="selectByUserId" resultType="com.tfjybj.typing.model.PersonResultModel">
+        SELECT
+            count( a.create_time ) AS num,
+            right_words,
+            create_time,
+            user_id,
+            user_name
+        FROM
+            (
+                SELECT
+                    user_id,
+                    user_name,
+                    right_words,
+                    words,
+                    DATE_FORMAT( p.create_time, '%Y-%m-%d' ) AS create_time
+                FROM
+                    person_result p
+                WHERE
+                    right_words IS NOT NULL
+                  AND user_id = #{userId}
+
+            ) a
+        GROUP BY
+            create_time
+    </select>
+
+</mapper>

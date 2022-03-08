@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="com.tfjybj.typing.provider.dao.ResultDao">
+
+    <select id="selectTeamResult" resultType="double">
+        SELECT
+            `group_results`
+        FROM
+            ty_results
+        WHERE
+            id = (
+            SELECT
+                user_code
+            FROM
+                tb_user
+            WHERE
+            id = #{userId}
+            )
+    </select>
+</mapper>

@@ -1,0 +1,490 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="com.tfjybj.typing.provider.dao.TeamDao">
+    <update id="updateTeamIsDelete">
+        UPDATE `ty_team`
+        SET is_delete = 1
+        WHERE team_id = #{teamId}
+    </update>
+
+
+    <insert id="insertTeam" parameterType="com.tfjybj.typing.entity.TeamEntity">
+        INSERT INTO `ty_team` (`id`, `team_id`, `team_name`, `group_results`, `create_time`, `is_delete`)
+            VALUE
+            (#{id},#{teamId},#{teamName},#{groupResults},now(),0)
+    </insert>
+
+    <select id="selectTeamById" resultType="com.tfjybj.typing.entity.TeamEntity">
+        SELECT `id`,
+               `team_id`,
+               `team_name`,
+               `group_results`
+        FROM `ty_team`
+        WHERE team_id = #{teamId}
+          and is_delete = 0
+    </select>
+
+
+    <select id="selectTeamResultByUserId" resultType="double">
+        SELECT group_results
+        FROM `ty_team`
+        WHERE team_id =
+              (
+                  SELECT team_id
+                  FROM `ty_person`
+                  WHERE id = #{userId}
+              )
+          AND is_delete = 0
+    </select>
+
+
+    <select id="selectTeamRanking" resultType="com.tfjybj.typing.model.TeamRankingModel">
+<!--        SELECT-->
+<!--        t.team_id As teamId,-->
+<!--        GROUP_CONCAT(distinct-->
+<!--        CONCAT_WS( ",", p.`user_name` )) As userNames,-->
+<!--        t.team_name As teamName,-->
+<!--        t.group_results As teamGrade,-->
+<!--        p.class_name as className-->
+<!--        FROM-->
+<!--        `ty_person` p-->
+<!--        RIGHT JOIN `ty_team` t ON p.team_id = t.team_id-->
+<!--        WHERE-->
+<!--        t.is_delete = 0-->
+<!--        AND p.is_delete = 0-->
+<!--        <if test="className!=null and className.size() > 0">-->
+<!--            AND p.`class_name` in-->
+<!--            <foreach item="item" collection="className" index="index" open="(" separator="," close=")">#{item}</foreach>-->
+<!--        </if>-->
+<!--        GROUP BY-->
+<!--        t.team_id-->
+<!--        ORDER BY-->
+<!--        t.group_results DESC-->
+
+-- 增加查询进步率
+<!--        SELECT-->
+<!--        t.team_id AS teamId,-->
+<!--        GROUP_CONCAT(-->
+<!--        DISTINCT CONCAT_WS( ",", a.`user_name` )) AS userNames,-->
+<!--        GROUP_CONCAT(-->
+<!--        DISTINCT CONCAT_WS( ",", a.user_code )) AS userCodes,-->
+<!--        GROUP_CONCAT(-->
+<!--        CONCAT_WS( ",", a.`level` )) AS levels,-->
+<!--        t.team_name AS teamName,-->
+<!--        t.group_results AS teamGrade,-->
+<!--        a.class_name AS className-->
+
+<!--        FROM-->
+<!--        ty_team t-->
+<!--        right JOIN (-->
+<!--        SELECT-->
+<!--        tp.`level`,-->
+<!--        tp.user_id,-->
+<!--        tp.user_name,-->
+<!--        p.user_code,-->
+<!--        p.class_name,-->
+<!--        p.team_id-->
+<!--        FROM-->
+<!--        ty_integral tp-->
+<!--        left  JOIN ty_person p ON tp.user_id = p.id-->
+<!--        WHERE-->
+<!--        tp.is_delete = 0-->
+<!--        AND p.is_delete = 0-->
+<!--        ) a ON a.team_id = t.team_id-->
+<!--        WHERE-->
+<!--        t.is_delete = 0-->
+
+<!--        <if test="className!=null and className.size() > 0">-->
+<!--            AND a.`class_name` in-->
+<!--            <foreach item="item" collection="className" index="index" open="(" separator="," close=")">#{item}</foreach>-->
+<!--        </if>-->
+<!--        GROUP BY t.team_id-->
+<!--        ORDER BY t.group_results desc-->
+
+-- 查询数据库中等级最高的成绩，之前是根据最后一次成绩来查询的。
+        SELECT
+        t.team_id AS teamId,
+        GROUP_CONCAT(
+        DISTINCT CONCAT_WS( ",", a.`user_name` )) AS userNames,
+        GROUP_CONCAT(
+        DISTINCT CONCAT_WS( ",", a.user_code )) AS userCodes,
+        GROUP_CONCAT(
+        CONCAT_WS( ",", a.`level` )) AS levels,
+        t.team_name AS teamName,
+        t.group_results AS teamGrade,
+        a.class_name AS className
+        FROM
+        ty_team t
+        RIGHT JOIN (
+        SELECT DISTINCT
+        IFNULL( tp.LEVEL, '小白键盘手' ) AS LEVEL,
+        p.id AS user_id,
+        p.user_name,
+        p.user_code,
+        p.class_name,
+        p.team_id
+        FROM
+        (
+        SELECT
+        *
+        FROM
+        (
+        SELECT DISTINCT
+        i.user_id,
+        i.user_name,
+        i.`level`,
+        a.remark
+        FROM
+        `ty_integral` AS i
+        LEFT JOIN ( SELECT * FROM ty_level AS l ORDER BY l.remark DESC ) a ON a.`level` = i.`level`
+        ORDER BY
+        user_name,
+        a.remark DESC
+        ) b
+        GROUP BY
+        user_name
+        ) tp
+        RIGHT JOIN ty_person p ON tp.user_id = p.id
+        WHERE
+        p.is_delete = 0
+        ) a ON a.team_id = t.team_id
+        WHERE
+        t.is_delete = 0
+
+        <if test="className!=null and className.size() > 0">
+                   AND a.`class_name` in
+                  <foreach item="item" collection="className" index="index" open="(" separator="," close=")">#{item}</foreach>
+              </if>
+        GROUP BY
+        t.team_id
+        ORDER BY
+        t.group_results DESC
+    </select>
+
+<!--    查询全部未练习人员——张艳伟——2021年11月8日16:49:33-->
+    <select id="selectAllNotRanking" resultType="com.tfjybj.typing.model.TeamRankingModel">
+        SELECT DISTINCT
+            b.class_name,
+            b.user_code,
+            b.user_name,
+            t.team_name AS teamName
+        FROM
+            (
+                SELECT
+                    *
+                FROM
+                    (
+                        SELECT
+                            p.user_code,
+                            p.user_name,
+                            p.class_name,
+                            i.id,
+                            p.team_id
+                        FROM
+                            `ty_person` p
+                                LEFT JOIN person_result i ON p.id = i.user_id
+                        WHERE
+                            p.is_delete = 0
+                          AND i.id IS NULL
+                        ORDER BY
+                            p.user_code DESC
+                    ) a
+                GROUP BY
+                    a.user_code
+            ) b
+                LEFT JOIN ty_team t ON b.team_id = t.team_id
+        ORDER BY
+            b.user_code
+    </select>
+
+<!--    根据班级查询全部未练习人员——张艳伟——2021年11月8日16:50:30-->
+    <select id="selectAllNotRankingByClass" resultType="com.tfjybj.typing.model.TeamRankingModel">
+        SELECT DISTINCT
+            b.class_name,
+            b.user_code,
+            b.user_name,
+            t.team_name AS teamName
+        FROM
+            (
+                SELECT
+                    *
+                FROM
+                    (
+                        SELECT
+                            p.user_code,
+                            p.user_name,
+                            p.class_name,
+                            i.id,
+                            p.team_id
+                        FROM
+                            `ty_person` p
+                                LEFT JOIN person_result i ON p.id = i.user_id
+                        WHERE
+                            p.is_delete = 0
+                          AND i.id IS NULL
+                          AND p.class_name = #{className}
+                        ORDER BY
+                            p.user_code DESC
+                    ) a
+                GROUP BY
+                    a.user_code
+            ) b
+                LEFT JOIN ty_team t ON b.team_id = t.team_id
+        ORDER BY
+            b.user_code
+    </select>
+
+
+<!--    查询全部积分排名-AR奖状接口-张艳伟-2021年11月8日15:22:11-->
+    <select id="selectAllTeamRanking" resultType="com.tfjybj.typing.model.TeamRankingModel">
+        SELECT DISTINCT
+            t.team_name AS teamName,
+            c.remark,
+            c.`LEVEL`,
+            c.user_code,
+            c.user_id,
+            c.user_name,
+            c.class_name
+        FROM
+            (
+                SELECT
+                    *
+                FROM
+                    (
+                        SELECT DISTINCT
+                            i.user_id,
+                            IFNULL( i.LEVEL, '小白键盘手' ) AS LEVEL,
+                            p.user_name,
+                            p.user_code,
+                            p.class_name,
+                            p.team_id,
+                            l.remark
+                        FROM
+                            `ty_integral` AS i,
+                            ty_level AS l,
+                            ty_person AS p
+                        WHERE
+                            l.`level` = i.`level`
+                          AND p.id = i.user_id
+                          AND p.is_delete = 0
+                        ORDER BY
+                            p.user_name,
+                            l.remark DESC
+                    ) b
+                GROUP BY
+                    user_name
+            ) c
+                LEFT JOIN ty_team t ON c.team_id = t.team_id
+        ORDER BY
+            remark DESC
+    </select>
+
+<!--    根据班级查询积分排名&#45;&#45;查询晋级榜单-张艳伟-2021年11月8日15:23:08-->
+    <select id="selectAllTeamRankingByClass" resultType="com.tfjybj.typing.model.TeamRankingModel">
+        SELECT DISTINCT
+            t.team_name AS teamName,
+            c.remark,
+            c.`LEVEL`,
+            c.user_code,
+            c.user_id,
+            c.user_name,
+            c.class_name
+        FROM
+            (
+                SELECT DISTINCT
+                    IFNULL( tp.LEVEL, '小白键盘手' ) AS LEVEL,
+                    p.id AS user_id,
+                    p.user_name,
+                    p.user_code,
+                    p.class_name,
+                    p.team_id,
+                    tp.remark
+                FROM
+                    (
+                        SELECT
+                            *
+                        FROM
+                            (
+                                SELECT DISTINCT
+                                    i.user_id,
+                                    i.user_name,
+                                    i.`level`,
+                                    a.remark
+                                FROM
+                                    `ty_integral` AS i
+                                        LEFT JOIN ( SELECT * FROM ty_level AS l ORDER BY l.remark DESC ) a ON a.`level` = i.`level`
+                                ORDER BY
+                                    user_name,
+                                    a.remark DESC
+                            ) b
+                        GROUP BY
+                            user_name
+                    ) tp
+                        RIGHT JOIN ( SELECT * FROM ty_person p WHERE class_name = #{className}
+                    ) p ON tp.user_id = p.id
+                WHERE
+                    p.is_delete = 0
+            ) c
+                LEFT JOIN ty_team t ON c.team_id = t.team_id
+        ORDER BY
+            remark DESC
+    </select>
+<!--    根据等级查询积分排名-晋级榜单&#45;&#45;张艳伟-2021年11月15日11:35:35-->
+    <select id="selectAllTeamRankingByLevel" resultType="com.tfjybj.typing.model.TeamRankingModel">
+        SELECT DISTINCT
+            t.team_name AS teamName,
+            c.remark,
+            c.`LEVEL`,
+            c.user_code,
+            c.user_id,
+            c.user_name,
+            c.class_name
+        FROM
+            (
+                SELECT
+                    *
+                FROM
+                    (
+                        SELECT DISTINCT
+                            i.user_id,
+                            IFNULL( i.LEVEL, '小白键盘手' ) AS LEVEL,
+                            p.user_name,
+                            p.user_code,
+                            p.class_name,
+                            p.team_id,
+                            l.remark
+                        FROM
+                            `ty_integral` AS i,
+                            ty_level AS l,
+                            ty_person AS p
+                        WHERE
+                            l.`level` = i.`level`
+                          AND p.id = i.user_id
+                          AND p.is_delete = 0
+                        ORDER BY
+                            p.user_name,
+                            l.remark DESC
+                    ) b
+                GROUP BY
+                    user_name
+            ) c
+                LEFT JOIN ty_team t ON c.team_id = t.team_id
+        WHERE
+            c.LEVEL = #{level}
+
+        ORDER BY
+            remark DESC
+    </select>
+<!--    根据班级和等级查询积分排名-晋级榜单-张艳伟-2021年11月15日11:36:26-->
+    <select id="selectAllTeamRankingByClassLevel" resultType="com.tfjybj.typing.model.TeamRankingModel">
+        SELECT DISTINCT
+            t.team_name AS teamName,
+            c.remark,
+            c.`LEVEL`,
+            c.user_code,
+            c.user_id,
+            c.user_name,
+            c.class_name
+        FROM
+            (
+                SELECT DISTINCT
+                    IFNULL( tp.LEVEL, '小白键盘手' ) AS LEVEL,
+                    p.id AS user_id,
+                    p.user_name,
+                    p.user_code,
+                    p.class_name,
+                    p.team_id,
+                    tp.remark
+                FROM
+                    (
+                        SELECT
+                            *
+                        FROM
+                            (
+                                SELECT DISTINCT
+                                    i.user_id,
+                                    i.user_name,
+                                    i.`level`,
+                                    a.remark
+                                FROM
+                                    `ty_integral` AS i
+                                        LEFT JOIN ( SELECT * FROM ty_level AS l ORDER BY l.remark DESC ) a ON a.`level` = i.`level`
+                                ORDER BY
+                                    user_name,
+                                    a.remark DESC
+                            ) b
+                        GROUP BY
+                            user_name
+                    ) tp
+                        RIGHT JOIN ( SELECT * FROM ty_person p WHERE class_name = #{className}
+                    ) p ON tp.user_id = p.id
+                WHERE p.is_delete = 0 ) c
+                LEFT JOIN ty_team t ON c.team_id = t.team_id
+        WHERE
+            c.LEVEL = #{level}
+
+        ORDER BY
+            remark DESC
+    </select>
+
+    <!--查询历史的最早记录-->
+    <select id="selectTeamGrowthChart" resultType="com.tfjybj.typing.model.TeamGrowthChartModel">
+
+        SELECT
+        n.team_id AS teamId,
+        n.team_name AS teamName,
+        n.newResult - o.olcResult AS growthIntegral,
+        n.class_name as className
+        FROM
+        (
+        SELECT
+        a.team_id,
+        a.team_name,
+        a.group_results AS newResult,
+        tp.class_name
+        FROM
+        ty_team a
+        LEFT JOIN ty_person tp ON a.team_id = tp.team_id
+        WHERE
+        a.is_delete = 0
+        <if test="className!=null and className.size() > 0">
+            AND  tp.class_name in
+            <foreach item="item" collection="className" index="index" open="(" separator="," close=")">#{item}</foreach>
+        </if>
+
+
+        ) n
+        RIGHT JOIN (
+        SELECT
+        t.team_id,
+        t.group_results AS olcResult
+        FROM
+        (
+        SELECT
+        a.team_id,
+        a.group_results,
+        a.create_time
+        FROM
+        ty_team a
+        LEFT JOIN ty_person tp ON a.team_id = tp.team_id
+        WHERE
+        a.is_delete = 1
+        AND tp.is_delete = 0
+        <if test="className!=null and className.size() > 0">
+            AND tp.class_name in
+            <foreach item="item" collection="className" index="index" open="(" separator="," close=")">#{item}</foreach>
+        </if>
+
+        ORDER BY
+        a.create_time DESC
+        ) t
+        ) o ON o.team_id = n.team_id
+        GROUP BY
+        o.team_id
+        ORDER BY
+        growthIntegral DESC
+        LIMIT 10
+    </select>
+
+</mapper>

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="com.tfjybj.typing.provider.dao.TypArticleDao">
+	<!--根据TypArticle段落顺序模糊查询TypArticleEntity-->
+    <select id="queryLikeChildOrder" resultType="com.tfjybj.typing.entity.TypArticleEntity">
+        SELECT
+			*
+        FROM
+			typ_article f
+        WHERE
+			f.is_delete = 0
+        <if test="childOrder !=''">
+            <bind name="pattern" value="'%' + childOrder + '%'"/>
+            AND f.child_order LIKE #{pattern}
+        </if>
+        ORDER BY
+        f.create_time DESC
+    </select>
+
+
+    <!--查找所有文章名称TypArticleEntity-->
+    <select id="selectAllArticles" resultType="java.lang.String">
+        SELECT
+        name
+        FROM
+        typ_article
+        WHERE
+        p_id = "0"
+    </select>
+
+    <!--查找所有文章内容TypArticleEntity-->
+    <select id="selectAllArticleContent" resultType="java.lang.String">
+      SELECT name
+        FROM
+            typ_article
+        WHERE
+            p_id = (SELECT
+            id
+        FROM
+            typ_article
+        WHERE
+            name = #{articleName}) order by child_order;
+    </select>
+
+    <!--将英文文章句子按统一长度分行插入数据库-->
+    <insert id="InsertArticeleByLine" parameterType="com.tfjybj.typing.model.TypArticleModel">
+        INSERT INTO typ_article
+        (id,child_order,name,p_id)
+        VALUES
+        <foreach collection="list" item="TypArticleModel" separator=",">
+            (#{TypArticleModel.id},#{TypArticleModel.childOrder},#{TypArticleModel.name},#{TypArticleModel.pId})
+        </foreach>
+    </insert>
+
+</mapper>

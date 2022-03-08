@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="com.tfjybj.typing.provider.dao.PersonDao">
+
+    <!--增加-->
+    <insert id="insertPersonTeam" parameterType="com.tfjybj.typing.entity.PersonEntity">
+        INSERT INTO `ty_person` (
+            `id`,
+            `team_id`,
+            `user_code`,
+            `user_name`,
+            `class_name`)
+ value ((select id from tb_user where user_code = #{PersonEntity.userCode} and state=0),#{PersonEntity.teamId},#{PersonEntity.userCode},#{PersonEntity.userName},#{PersonEntity.className})
+    </insert>
+
+    <!--删除-->
+    <update id="deletePersonTeam">
+        UPDATE `ty_person`
+        SET is_delete = 1
+        WHERE
+            user_code = #{userId}
+    </update>
+    <!--修改-->
+    <update id="updatePersonTeam" parameterType="com.tfjybj.typing.entity.PersonEntity">
+        UPDATE `ty_person`
+        SET team_id = #{PersonEntity.teamId},user_name=#{PersonEntity.userName},class_name=#{PersonEntity.className}
+        WHERE
+            user_code = #{PersonEntity.userCode}
+    </update>
+
+    <!--查询    -->
+    <select id="querPersonTeam" resultType="com.tfjybj.typing.entity.PersonEntity">
+        SELECT
+            id as id,
+            user_name as userName,
+            user_code as userCode,
+            team_id as teamId,
+            class_name as className
+        FROM
+            ty_person
+        where
+           is_delete=0
+    </select>
+    <select id="selectPersonTeam" resultType="com.tfjybj.typing.entity.PersonEntity">
+        SELECT
+            user_name AS userName,
+            user_code AS userCode,
+            team_id AS teamId,
+            class_name AS className
+        FROM
+            ty_person tp
+        WHERE
+            tp.is_delete = 0
+          AND tp.team_id =(
+            SELECT DISTINCT
+                team_id
+            FROM
+                ty_team t
+            WHERE
+                team_name = #{teamName})
+    </select>
+
+    <!--查询班级    -->
+    <select id="queryClassName" resultType="com.tfjybj.typing.model.ClassNameModel">
+        SELECT DISTINCT
+	        p.`class_name` AS `className`,
+	        case p.`is_delete` when 0 then '展示' else '不展示' end As `isdelete`
+        FROM
+	        `ty_person` AS p
+        GROUP BY
+	        p.`class_name`
+    </select>
+
+    <update id="updateClassNameIsDelete"  >
+        update `ty_person` AS p
+        set p.`is_delete` = '1'
+        where p.`class_name`= #{className}
+    </update>
+
+    <update id="updateClassName">
+        update `ty_person` AS p
+        set p.`is_delete` = '0'
+        where p.`class_name`= #{className}
+    </update>
+</mapper>

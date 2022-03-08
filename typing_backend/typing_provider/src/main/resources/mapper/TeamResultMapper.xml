@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="com.tfjybj.typing.provider.dao.TeamResultDao">
+    <!--根据TeamResult战队名称模糊查询TeamResultEntity-->
+    <select id="queryLikeTeamName" resultType="com.tfjybj.typing.entity.TeamResultEntity">
+        SELECT
+			*
+        FROM
+			team_result f
+        WHERE
+			f.is_delete = 0
+        <if test="teamName !=''">
+            <bind name="pattern" value="'%' + teamName + '%'"/>
+            AND f.team_name LIKE #{pattern}
+        </if>
+        ORDER BY
+        f.create_time DESC
+    </select>
+    <!--将redis完成比赛的队伍插入数据库-->
+    <insert id="RedisToDb">
+        INSERT INTO team_result
+        (id, team_name, speed,right_rate,set_time,article_name,team_score)
+        VALUES
+        <foreach collection="list" item="teamResultModel" separator=",">
+            (#{teamResultModel.id}, #{teamResultModel.teamName}, #{teamResultModel.speed}, #{teamResultModel.rightRate}, #{teamResultModel.setTime}, #{teamResultModel.articleName}, #{teamResultModel.teamScore})
+        </foreach>
+    </insert>
+
+</mapper>

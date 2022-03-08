@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="com.tfjybj.typing.provider.dao.IntegralDao">
+
+
+
+    <select id="selectPersonIntegral" resultMap="personIntegralMap">
+        SELECT
+            `level`,
+            `total_grade`,
+            `progress_grade`
+        FROM
+            ty_integral
+        WHERE
+            user_id = #{userId}
+            AND is_delete =0
+    </select>
+
+    <resultMap id="personIntegralMap" type="com.tfjybj.typing.model.PersonIntegralModel">
+        <result column="level" property="level"></result>
+        <result column="total_grade" property="totalGrade"></result>
+        <result column="progress_grade" property="progressGrade"></result>
+    </resultMap>
+
+
+    <update id="updatePersonIntegralIsDelete">
+        UPDATE `ty_integral`
+        SET is_delete = 1
+        WHERE
+            user_id = #{userId}
+    </update>
+
+    <insert id="insertIntegral" parameterType="com.tfjybj.typing.entity.IntegralEntity">
+        INSERT INTO `ty_integral` (
+            `id`,
+            `user_id`,
+            `user_name`,
+            `level`,
+            `base_grade`,
+            `bonus_grade`,
+        `total_grade`,
+        `progress_grade`,`create_time`,`is_delete`) value (#{integralEntity.id},#{integralEntity.userId},#{integralEntity.userName},#{integralEntity.level},#{integralEntity.baseGrade},#{integralEntity.bonusGrade},#{integralEntity.totalGrade},#{integralEntity.progressGrade},now(),0)
+    </insert>
+
+    <insert id="insertImprovement" parameterType="com.tfjybj.typing.model.ImproveReportModel">
+        INSERT INTO ty_improve_report
+            (id,user_id,user_name,level,create_time)
+        VALUES
+            (#{improveReportModel.id},#{improveReportModel.userId},#{improveReportModel.userName},#{improveReportModel.level},#{improveReportModel.createTime})
+    </insert>
+
+    <select id="selectLastTotalIntegral" resultType="double">
+        SELECT
+            total_grade
+        FROM
+            `ty_integral`
+        WHERE
+            user_id = #{userId}
+        ORDER BY
+            create_time DESC
+            LIMIT 1
+    </select>
+
+
+    <select id="selectCountNumber" resultType="int">
+        SELECT
+            count(*)
+        FROM
+            `ty_integral`
+        WHERE
+            is_delete =0
+    </select>
+
+    <select id="selectLevelRecord" resultType="com.tfjybj.typing.model.RiseCountModel">
+        SELECT
+            level,user_name
+        FROM
+            ty_integral
+        WHERE
+            is_delete=1
+        AND
+            user_id=#{userId}
+        ORDER BY
+            create_time DESC
+        LIMIT 1
+    </select>
+
+    <select id="selectImproveInfo" resultType="com.tfjybj.typing.model.ImproveReportModel">
+        SELECT
+            *
+        FROM
+            (
+                SELECT DISTINCT
+                    b.class_name,
+                    a.user_name,
+                    a.LEVEL,
+                    l.remark
+                FROM
+                    `ty_improve_report` a,
+                    `ty_person` b,
+                    ty_level l
+                WHERE
+                    b.is_delete = 0
+                  AND a.user_id = b.id
+                  AND a.is_delete = 0
+                  AND a.`level` = l.`level`
+                ORDER BY
+                    a.user_id,
+                    remark DESC
+            ) c
+        GROUP BY
+            c.user_name
+        ORDER BY
+            c.remark DESC
+    </select>
+
+    <select id="selectPersonResultSum" resultType="com.tfjybj.typing.model.PersonResultModel">
+     SELECT
+	user_name,
+
+	count(*) AS num
+FROM
+	person_result pr
+WHERE
+user_id=#{userId}
+    </select>
+    <select id="selectGrade" resultType="com.tfjybj.typing.model.GradeModel">
+      SELECT
+            user_name,level, count(*)as num
+        From
+            ty_integral
+        Where
+            user_id=(select id from tb_user where user_code=#{userCode} and state=0)
+        Group By level
+        ORDER BY num  DESC
+    </select>
+
+
+    <select id="selectGradeUserId" resultType="com.tfjybj.typing.model.GradeModel">
+        SELECT
+            user_name,level, count(*)as num
+        From
+            ty_integral
+        Where
+                user_id=(select id from tb_user where id=#{userId} and state=0 )
+        Group By level
+        ORDER BY num  DESC
+    </select>
+
+
+</mapper>

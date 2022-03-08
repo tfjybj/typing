@@ -1,0 +1,260 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="com.tfjybj.typing.provider.dao.PersonIntegralDao">
+
+    <insert id="insertIntegral" parameterType="com.tfjybj.typing.entity.PersonIntegralEntity">
+        INSERT INTO ty_person_integral ( id, user_code,user_name,integral_id, integral_source, small_source, integral_reward, remark, is_delete, create_time, update_time )
+        VALUES
+            (#{PersonIntegralEntity.id},
+             #{PersonIntegralEntity.userCode},
+             #{PersonIntegralEntity.userName},
+             #{PersonIntegralEntity.integralId},
+             #{PersonIntegralEntity.integralSource},
+             #{PersonIntegralEntity.smallSource},
+             #{PersonIntegralEntity.integralReward},
+             #{PersonIntegralEntity.remark},
+             #{PersonIntegralEntity.isDelete},
+             #{PersonIntegralEntity.createTime},
+             #{PersonIntegralEntity.updateTime}
+
+            )
+    </insert>
+
+
+
+
+    <select id="selectByUserCode" resultType="com.tfjybj.typing.model.IntegralPersonModel">
+        SELECT
+            id AS id,
+            user_code,
+            user_name,
+            integral_source,
+            small_source,
+            create_time,
+            DATE_FORMAT( ty.create_time, '%Y-%m-%d' ) as create_day
+        FROM
+            ty_person_integral ty
+        WHERE
+            is_delete = 0
+          AND ty.user_code = #{userCode}
+
+          AND ty.integral_source = #{integralSource}
+
+          AND ty.small_source = #{smallSource}
+        ORDER BY
+            create_time DESC
+    </select>
+    <select id="selectPunchByUserCode" resultType="com.tfjybj.typing.model.IntegralPersonModel">
+        SELECT DISTINCT
+            user_code,
+            user_name,
+            DATE_FORMAT( create_time, '%Y-%m-%d %H:%i' ) AS create_time ,
+            integral_source,
+            small_source,
+            integral_reward
+        FROM
+            ty_person_integral ty
+        WHERE
+            ty.user_code = #{userCode}
+          and integral_source ='每日打卡'
+        ORDER BY
+            create_time DESC
+    </select>
+    <select id="selectLevelByUserCode" resultType="com.tfjybj.typing.model.IntegralPersonModel">
+        SELECT DISTINCT
+            user_code,
+            user_name,
+            create_time,
+            integral_source,
+            small_source,
+            integral_reward
+        FROM
+            ty_person_integral ty
+        WHERE
+            ty.user_code = #{userCode}
+
+          AND integral_source = '荣誉证书'
+          and small_source=#{smallSource}
+        ORDER BY
+            create_time DESC
+    </select>
+
+    <select id="selectPunchByTime" resultType="com.tfjybj.typing.model.IntegralPersonModel">
+        SELECT DISTINCT
+            a.user_code,
+            a.user_name,
+            a.integral_source,
+            a.small_source,
+            a.integral_reward,
+            DATE_FORMAT( a.create_time, '%Y-%m-%d %H:%i' ) AS create_time ,
+
+            t.team_name
+        FROM
+            (
+                SELECT
+                    ty.user_code,
+                    ty.user_name,
+                    ty.integral_source,
+                    ty.small_source,
+                    ty.integral_reward,
+                    ty.create_time,
+                    p.team_id
+                FROM
+                    ty_person_integral ty
+                        RIGHT JOIN `ty_person` p ON p.user_code = ty.user_code
+--                         AND p.class_name LIKE '%21级%'
+                        AND p.is_delete = 0
+                WHERE
+                    ty.`create_time` BETWEEN #{beginTime}
+                        AND #{endTime}
+                  AND ty.integral_source = '每日打卡'
+            ) a
+                LEFT JOIN ty_team t ON a.team_id = t.team_id
+        ORDER BY
+            a.create_time DESC
+    </select>
+
+    <select id="selectPunchByTimeClass" resultType="com.tfjybj.typing.model.IntegralPersonModel">
+        SELECT DISTINCT
+            a.user_code,
+            a.user_name,
+            a.integral_source,
+            a.small_source,
+            a.integral_reward,
+            DATE_FORMAT( a.create_time, '%Y-%m-%d %H:%i' ) AS create_time,
+
+            t.team_name
+        FROM
+            (
+                SELECT
+                    ty.user_code,
+                    ty.user_name,
+                    ty.integral_source,
+                    ty.small_source,
+                    ty.integral_reward,
+                    ty.create_time,
+                    p.team_id
+                FROM
+                    ty_person_integral ty
+                        RIGHT JOIN `ty_person` p ON p.user_code = ty.user_code
+                        AND p.class_name=#{className}
+                WHERE
+                    ty.`create_time` BETWEEN #{beginTime}
+                        AND #{endTime}
+                  AND ty.integral_source = '每日打卡'
+            ) a
+                LEFT JOIN ty_team t ON a.team_id = t.team_id
+        ORDER BY
+            a.create_time DESC
+    </select>
+
+
+    <select id="selectPunchByTimeSource" resultType="com.tfjybj.typing.model.IntegralPersonModel">
+        SELECT DISTINCT
+            a.user_code,
+            a.user_name,
+            a.integral_source,
+            a.small_source,
+            a.integral_reward,
+            DATE_FORMAT( a.create_time, '%Y-%m-%d %H:%i' ) AS create_time ,
+
+            t.team_name
+        FROM
+            (
+                SELECT
+                    ty.user_code,
+                    ty.user_name,
+                    ty.integral_source,
+                    ty.small_source,
+                    ty.integral_reward,
+                    ty.create_time,
+                    p.team_id
+                FROM
+                    ty_person_integral ty
+                        RIGHT JOIN `ty_person` p ON p.user_code = ty.user_code
+--                         AND p.class_name  LIKE '%21级%'
+                        AND p.is_delete = 0
+                WHERE
+                    ty.`create_time` BETWEEN #{beginTime}
+                        AND #{endTime}
+                  AND ty.integral_source = '每日打卡'
+                and ty.small_source=#{smallSource}
+            ) a
+                LEFT JOIN ty_team t ON a.team_id = t.team_id
+        ORDER BY
+            a.create_time DESC
+    </select>
+    <select id="selectPunchByTimeSourceClass" resultType="com.tfjybj.typing.model.IntegralPersonModel">
+        SELECT DISTINCT
+            a.user_code,
+            a.user_name,
+            a.integral_source,
+            a.small_source,
+            a.integral_reward,
+            DATE_FORMAT( a.create_time, '%Y-%m-%d %H:%i' ) AS create_time ,
+
+            t.team_name
+        FROM
+            (
+                SELECT
+                    ty.user_code,
+                    ty.user_name,
+                    ty.integral_source,
+                    ty.small_source,
+                    ty.integral_reward,
+                    ty.create_time,
+                    p.team_id
+                FROM
+                    ty_person_integral ty
+                        RIGHT JOIN `ty_person` p ON p.user_code = ty.user_code
+                        AND p.class_name  =#{className}
+                WHERE
+                    ty.`create_time` BETWEEN #{beginTime}
+                        AND #{endTime}
+                  AND ty.integral_source = '每日打卡'
+                  and ty.small_source=#{smallSource}
+            ) a
+                LEFT JOIN ty_team t ON a.team_id = t.team_id
+        ORDER BY
+            a.create_time DESC
+    </select>
+
+
+    <!--    &lt;!&ndash;查询 &ndash;&gt;-->
+<!--    <select id="selectIntegralRule" resultType="com.tfjybj.typing.entity.IntegralRuleEntity">-->
+<!--        SELECT-->
+<!--            id AS id,-->
+<!--            integral_source,-->
+<!--            integral_reward,-->
+<!--            small_source,-->
+<!--            create_time-->
+<!--        FROM-->
+<!--            ty_integral_rule-->
+<!--        WHERE-->
+<!--            is_delete = 0-->
+<!--    </select>-->
+
+
+
+<!--    &lt;!&ndash;删除&ndash;&gt;-->
+<!--    <update id="deleteIntegralRule">-->
+<!--        UPDATE ty_integral_rule-->
+<!--        SET is_delete = 1-->
+<!--        WHERE-->
+<!--            small_source = #{smallSource}-->
+
+<!--            ORDER BY-->
+<!--	create_time DESC-->
+<!--    </update>-->
+<!--    &lt;!&ndash;修改&ndash;&gt;-->
+<!--    <update id="updateIntegralRule" parameterType="com.tfjybj.typing.entity.IntegralRuleEntity">-->
+<!--        UPDATE `ty_integral_rule`-->
+<!--        SET small_source = #{IntegralRuleEntity.smallSource},integral_source=#{IntegralRuleEntity.integralSource},integral_reward=#{IntegralRuleEntity.integralReward}-->
+
+<!--        WHERE-->
+<!--            small_source = #{IntegralRuleEntity.smallSource}-->
+<!--          and is_delete=0-->
+<!--    </update>-->
+
+</mapper>

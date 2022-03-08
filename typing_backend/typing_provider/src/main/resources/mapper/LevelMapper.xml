@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="com.tfjybj.typing.provider.dao.LevelDao">
+
+    <!--查询所有的未删除的等级规则-->
+    <select id="selectLevel" resultType="com.tfjybj.typing.entity.LevelEntity">
+        SELECT
+            *
+        FROM
+            `ty_level`
+        WHERE
+            is_delete=0
+    </select>
+    <!--删除等级判断规则-->
+    <update id="updateLevelIsDelete">
+        UPDATE `ty_level`
+        SET is_delete = 1
+        WHERE
+            id = #{id}
+    </update>
+
+    <!--插入等级判断标准-->
+    <insert id="insertLevel" parameterType="com.tfjybj.typing.entity.LevelEntity">
+    INSERT INTO `ty_level` ( `id`, `beginspeed`, `endspeed`, `beginaccuracy`,`endaccuracy`,`level`,`coefficient`,`qualified`,`basicscore`,`is_delete` )
+    VALUE
+    (#{levelEntity.id},#{levelEntity.beginspeed},#{levelEntity.endspeed},#{levelEntity.beginaccuracy},#{levelEntity.endaccuracy},#{levelEntity.level},#{levelEntity.coefficient},#{levelEntity.qualified},#{levelEntity.basicscore},0)
+    </insert>
+
+    <select id="updateLevel" resultType="java.lang.Boolean">
+        UPDATE `ty_level`
+        SET
+         `beginspeed`=#{levelEntity.beginspeed},
+         `endspeed`=#{levelEntity.endspeed},
+         `beginaccuracy`=#{levelEntity.beginaccuracy},
+         `endaccuracy`=#{levelEntity.endaccuracy},
+         `level`=#{levelEntity.level},
+         `coefficient`=#{levelEntity.coefficient},
+         `qualified`=#{levelEntity.qualified},
+         `basicscore`=#{levelEntity.basicscore}
+        WHERE
+            id = #{levelEntity.id}
+    </select>
+
+
+
+</mapper>

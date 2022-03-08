@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.tfjybj.typing.provider.dao.LotteryDao">
+    <insert id="insertLottery" parameterType="com.tfjybj.typing.model.LotteryModel">
+    INSERT INTO ty_lottery (id,user_name,user_code, level, create_time,is_delete,remark) VALUES (
+        #{LotteryModel.id},
+        #{LotteryModel.userName},
+        #{LotteryModel.userCode},
+        #{LotteryModel.level},
+        #{LotteryModel.createTime},
+        #{LotteryModel.isDelete},
+        #{LotteryModel.remark}
+    )
+    </insert>
+
+<!--    根据学号查询抽奖总次数-->
+    <select id="selectByUserCode" resultType="com.tfjybj.typing.model.LotteryModel">
+        SELECT
+            user_code,
+            user_name,
+            count(*) AS num
+        FROM
+            `ty_lottery` ty
+        WHERE
+            is_delete = 0
+          AND user_code = #{userCode}
+          AND remark !='0'
+    </select>
+
+    <!--    根据学号查询奖励抽奖次数-->
+    <select id="selectLotteryByUserCode" resultType="com.tfjybj.typing.model.LotteryModel">
+        SELECT
+            count(*) AS num
+        FROM
+            ( SELECT user_code, user_name, remark FROM `ty_lottery` ty WHERE is_delete = 0 AND user_code = #{userCode}
+                                                                         AND remark = '0' ) a
+    </select>
+
+</mapper>

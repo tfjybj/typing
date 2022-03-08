@@ -1,0 +1,271 @@
+spring:
+  profiles:
+    #   active: @profileActive@
+    active: dev
+auth-login: http://auth1.dmsd.tech:8080/auth-web/access/login
+---
+
+server:
+  port: 8081
+  servlet:
+    context-path: /typing-web
+spring:
+  profiles: dev
+  application:
+    name: typing_provider
+  datasource:
+    type: com.alibaba.druid.pool.DruidDataSource
+    driver-class-name: com.p6spy.engine.spy.P6SpyDriver
+    url: jdbc:p6spy:mysql://d-mysql.dmsd.tech:3306/newtyping_dev?autoReconnect=true&useSSL=false&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&allowMultiQueries=true
+    username: typing
+    password: typing
+    druid:
+      initial-size: 2 #初始化建立物理连接的个数
+      min-idle: 2 #最小连接池数量
+      max-active: 50 #最大连接池数量
+      validation-query: SELECT 1 #用来检测连接是否有效
+      test-while-idle: true #申请连接的时候检测，如果有空闲时间大于，则检测连接是否有效
+      aop-patterns: com.tfjybj.physical.*
+      stat-view-servlet:
+        url-pattern: /druid/*
+        reset-enable: true
+        login-username: druid
+        login-password: druid
+  #redis
+  redis:
+    host: redis.dmsd.tech
+    port: 6379
+    password:
+    database: 0
+    timeout: 300000ms #连接超时
+    jedis:
+      pool:
+        max-active: 8 #连接池最大的连接数
+        max-wait: -1ms #连接池最大的阻塞等待时间（负值表示没有限制）
+        max-idle: 500 #连接池最大的空闲连接
+mybatis-plus:
+  mapper-locations: classpath:mapper/*.xml
+  global-config:
+    mapUnderscoreToCamelCase: true #设置数据库字段名到JavaBean实体类属性命的自动驼峰转换
+    db-config:
+      logic-delete-value: 1 # 逻辑已删除值(默认为 1)
+      logic-not-delete-value: 0 # 逻辑未删除值(默认为 0)
+      id-type: ID_WORKER_STR
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+#分页
+#pagehelper:
+#  helperDialect: mysql
+#  reasonable: true
+#  supportMethodsArguments: true
+#  params: count=countSql
+##xxl-job
+xxl:
+  job:
+    admin:
+      addresses: http://192.168.22.67:8080/xxl-job-admin
+    executor:
+      appname: integral-job
+      ip:
+      port: 9998
+      logpath: /data/xxl-job/jobhandler
+      logretentiondays: -1
+    accessToken:
+# fastdfs3
+fdfs:
+  groupName: group3
+  so-timeout: 1500
+  connect-timeout: 600
+  tracker-list: 192.168.22.64:22122
+  replace-ip:
+    source: 192.168.22.64
+    dest: 192.168.22.64
+  realIp: 192.168.22.64
+  #pool:
+  #jmx-enabled:false
+sso-access: true
+auth-login: http://192.168.22.52:8081/auth-web/access/login
+reportLevel:
+  pri: "恭喜成功晋级初级键盘手的同学，他是："
+  sen: "太厉害了，下面的同学已经晋级为高级键盘手了，他是："
+  key: "我们的同学简直超神了啊，已经成为了真正的键盘侠，我们一起恭喜："
+rule:
+  selectPersonRankingRule: 2
+---
+server:
+  port: 8081
+  servlet:
+    context-path: /typing-web
+spring:
+  profiles: test
+  application:
+    name: typing_provider
+  datasource:
+    type: com.alibaba.druid.pool.DruidDataSource
+    driver-class-name: com.p6spy.engine.spy.P6SpyDriver
+    url: jdbc:p6spy:mysql://t-mysql.dmsd.tech:3306/newtyping_test?autoReconnect=true&useSSL=false&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&allowMultiQueries=true
+    username: newtyping
+    password: newtyping
+#    druid: d-mysql.dmsd.tech:3306
+##      initial-size: 2
+#      min-idle: 2
+#      max-active: 50
+#      validation-query: SELECT 1
+#      test-while-idle: true
+#      aop-patterns: com.tfjybj.physical.*
+#      stat-view-servlet:
+#        url-pattern: /druid/*
+#        reset-enable: true
+#        login-username: druid
+#        login-password: druid
+  #redis
+  redis:
+    host: redis.dmsd.tech
+    port: 6379
+    password:
+    database: 0
+    timeout: 300000ms
+    jedis:
+      pool:
+        max-active: 8
+        max-wait: -1ms
+        max-idle: 500
+mybatis-plus:
+  mapper-locations: classpath:mapper/*.xml
+  global-config:
+    mapUnderscoreToCamelCase: true
+    db-config:
+      logic-delete-value: 1 # 逻辑已删除值(默认为 1)
+      logic-not-delete-value: 0 # 逻辑未删除值(默认为 0)
+      id-type: ID_WORKER_STR
+
+#分页
+pagehelper:
+  helperDialect: mysql
+  reasonable: true
+  supportMethodsArguments: true
+  params: count=countSql
+
+##xxl-job
+xxl:
+  job:
+    admin:
+      addresses: http://192.168.22.67:8080/xxl-job-admin
+    executor:
+      appname: demo-job
+      ip:
+      port: 9998
+      logpath: /data/xxl-job/jobhandler
+      logretentiondays: -1
+    accessToken:
+
+# fastdfs
+fdfs:
+  so-timeout: 1500
+  connect-timeout: 600
+  tracker-list: 192.168.22.64:22122
+  replace-ip:
+    source: 192.168.22.64
+    dest: 192.168.22.64
+  realIp: 192.168.22.64
+  #pool:
+  #jmx-enabled:false
+sso-access: true
+reportLevel:
+  pri: "恭喜成功晋级初级键盘手的同学，他是："
+  sen: "太厉害了，下面的同学已经晋级为高级键盘手了，他是："
+  key: "我们的同学简直超神了啊，已经成为了真正的键盘侠，我们一起恭喜："
+rule:
+  selectPersonRankingRule: 2
+---
+
+
+server:
+  port: 8081
+  servlet:
+    context-path: /typing-web
+spring:
+  profiles: prod
+  application:
+    name: /typing_provider
+  datasource:
+
+    type: com.alibaba.druid.pool.DruidDataSource
+    driver-class-name: com.p6spy.engine.spy.P6SpyDriver
+    url: jdbc:p6spy:mysql://mysql.dmsd.tech:3306/newtyping_prod?autoReconnect=true&useSSL=false&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&allowMultiQueries=true
+    username: typing
+    password: typing
+    druid:
+      initial-size: 2
+      min-idle: 2
+      max-active: 50
+      validation-query: SELECT 1
+      test-while-idle: true
+      aop-patterns: com.tfjybj.physical.*
+      stat-view-servlet:
+        url-pattern: /druid/*
+        reset-enable: true
+        login-username: druid
+        login-password: druid
+  #redis
+  redis:
+    host: redis.dmsd.tech
+    port: 6379
+    password:
+    database: 0
+    timeout: 300000ms
+    jedis:
+      pool:
+        max-active: 8
+        max-wait: -1ms
+        max-idle: 500
+mybatis-plus:
+  mapper-locations: classpath:mapper/*.xml
+  global-config:
+    mapUnderscoreToCamelCase: true
+    db-config:
+      logic-delete-value: 1 # 逻辑已删除值(默认为 1)
+      logic-not-delete-value: 0 # 逻辑未删除值(默认为 0)
+      id-type: ID_WORKER_STR
+
+#分页
+pagehelper:
+  helperDialect: mysql
+  reasonable: true
+  supportMethodsArguments: true
+  params: count=countSql
+
+#xxl-job
+#xxl:
+#  job:
+#    admin:
+#      addresses: http://192.168.22.67:8080/xxl-job-admin
+#    executor:
+#      appname: demo-job
+#      ip:
+#      port: 9998
+#      logpath: /data/xxl-job/jobhandler
+#      logretentiondays: -1
+#    accessToken:
+
+    # fastdfs-prod
+fdfs:
+  so-timeout: 1500
+  connect-timeout: 600
+  tracker-list: 192.168.22.72:22122
+  realIp: www.dmsdbj.com
+  replace-ip:
+    source: 192.168.22.72
+    dest: 192.168.22.72
+    #pool:
+  #jmx-enabled:false
+sso-access: true
+auth-login: http://auth1.dmsd.tech:8080/auth-web/access/login
+
+reportLevel:
+  pri: "恭喜成功晋级初级键盘手的同学，他是："
+  sen: "太厉害了，下面的同学已经晋级为高级键盘手了，他是："
+  key: "我们的同学简直超神了啊，已经成为了真正的键盘侠，我们一起恭喜："
+
+rule:
+  selectPersonRankingRule: 2

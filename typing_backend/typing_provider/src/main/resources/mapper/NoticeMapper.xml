@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="com.tfjybj.typing.provider.dao.NoticeDao">
+    <!--增加-张艳伟-2021年10月18日16:45:09-->
+    <insert id="insertNotice" parameterType="com.tfjybj.typing.entity.NoticeEntity">
+        INSERT INTO ty_notice(id,
+                              notice_id,
+                              notice_name,
+                              notice,
+                              set_time,
+                              remark,
+                              is_delete,
+                              create_time,
+                              update_time,
+                              start_time,
+                              end_time
+
+        )
+        VALUES (
+                   #{NoticeEntity.id},
+                   #{NoticeEntity.noticeId},
+                   #{NoticeEntity.noticeName},
+                   #{NoticeEntity.notice},
+                   #{NoticeEntity.setTime},
+                   #{NoticeEntity.remark},
+                   #{NoticeEntity.isDelete},
+                   #{NoticeEntity.createTime},
+                   #{NoticeEntity.updateTime},
+                   #{NoticeEntity.startTime},
+                   #{NoticeEntity.endTime}
+
+               )
+    </insert>
+
+
+    <!--查询 -->
+    <select id="selectNotice" resultType="com.tfjybj.typing.entity.NoticeEntity">
+        SELECT
+            id AS id,
+            notice_name AS noticeName,
+            notice AS notice,
+            set_time AS setTime,
+            create_time,
+               start_time as startTime,
+               end_time as endTime,
+               remark
+        FROM
+            ty_notice
+where is_delete = 0
+    </select>
+
+<!--学生端查询公告内容-->
+    <select id="selectNoticeByName" resultType="com.tfjybj.typing.entity.NoticeEntity">
+        SELECT
+            id AS id,
+            notice_name AS noticeName,
+            notice AS notice,
+            set_time AS setTime,
+            start_time as startTime,
+            end_time as endTime,
+            create_time,
+               remark
+        FROM
+            ty_notice
+        WHERE
+            is_delete = 0
+          and notice_name=#{noticeName}
+        ORDER BY create_time desc
+
+    </select>
+
+    <!--删除-->
+    <update id="deleteNotice">
+        UPDATE `ty_notice`
+        SET is_delete = 1
+        WHERE
+            id = #{id}
+    </update>
+    <!--修改-->
+    <select id="updateNotice"  resultType="java.lang.Boolean">
+        UPDATE `ty_notice`
+        SET
+            notice_name = #{NoticeEntity.noticeName},
+            notice=#{NoticeEntity.notice},
+            set_time=#{NoticeEntity.setTime},
+        start_time=#{NoticeEntity.startTime},
+        end_time=#{NoticeEntity.endTime},
+            remark=#{NoticeEntity.remark}
+
+        WHERE
+            id = #{NoticeEntity.id}
+
+    </select>
+
+</mapper>

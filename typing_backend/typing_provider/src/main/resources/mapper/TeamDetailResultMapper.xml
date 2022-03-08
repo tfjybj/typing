@@ -1,0 +1,184 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="com.tfjybj.typing.provider.dao.TeamDetailResultDao">
+
+    <!--根据TeamDetailResult战队id模糊查询TeamDetailResultEntity-->
+    <select id="queryLikeTeamId" resultType="com.tfjybj.typing.entity.TeamDetailResultEntity">
+        SELECT
+			*
+        FROM
+			team_detail_result f
+        WHERE
+			f.is_delete = 0
+        <if test="teamId !=''">
+            <bind name="pattern" value="'%' + teamId + '%'"/>
+            AND f.team_id LIKE #{pattern}
+        </if>
+        ORDER BY
+        f.create_time DESC
+    </select>
+    <!--将redis完成比赛的人插入数据库-->
+    <insert id="RedisToDb">
+        INSERT INTO team_detail_result
+        (id, team_id, user_name,speed,right_rate,set_time,real_time,article_name,score)
+        VALUES
+        <foreach collection="list" item="teamDetailResultModel" separator=",">
+            (#{teamDetailResultModel.id}, #{teamDetailResultModel.teamName}, #{teamDetailResultModel.speed}, #{teamDetailResultModel.rightRate}, #{teamDetailResultModel.setTime},#{teamDetailResultModel.real_time}, #{teamDetailResultModel.articleName}, #{teamDetailResultModel.score})
+        </foreach>
+    </insert>
+
+
+    <!--添加邀请助力的成绩-张艳伟-2021年10月11日10:54:03-->
+    <insert id="insertTeamDetailResult" parameterType="com.tfjybj.typing.model.TeamDetailResultModel">
+        INSERT INTO team_detail_result ( id, team_id, user_name, speed, right_rate, set_time, create_time, real_time, article_name, score, user_code, team_name, improved_score )
+        VALUES
+            (#{id},
+             #{teamId},
+             #{userName},
+             #{speed},
+             #{rightRate},
+             #{setTime},
+             #{createTime},
+             #{realTime},
+             #{articleName},
+             #{score},
+             #{userCode},
+             #{teamName},
+             #{improvedScore}
+            )
+    </insert>
+
+    <!--教师端查看邀请助力的详细成绩-张艳伟-2021年10月11日10:54:03-->
+    <select id="selectTeamByTimeClass" resultType="com.tfjybj.typing.model.TeamDetailResultModel">
+        SELECT
+            i.user_code,
+            i.team_id,
+            i.team_name,
+            i.user_name,
+            i.`create_time`,
+            i.real_time,
+            i.article_name,
+            i.score,
+            i.article_name,
+            i.speed,
+            i.right_rate,
+            i.set_time,
+            p.class_name,
+            i.improved_score
+        FROM
+            team_detail_result i
+                RIGHT JOIN `ty_person` p ON p.user_code = i.user_code
+                AND p.class_name = #{className}
+        WHERE
+            i.`create_time` BETWEEN #{beginTime}
+                AND #{endTime}
+        ORDER BY
+            i.create_time DESC
+</select>
+
+
+
+    <select id="selectByTimeUserCode" resultType="com.tfjybj.typing.model.TeamDetailResultModel">
+        SELECT
+            a.user_code,
+            a.user_name,
+            a.create_day,
+            count( a.create_day ) AS num
+        FROM
+            (
+                SELECT
+                    user_code,
+                    user_name,
+                    create_time,
+                    DATE_FORMAT( ty.create_time, '%Y-%m-%d' ) AS create_day
+                FROM
+                    team_detail_result ty
+                WHERE
+                    ty.user_code = #{userCode}
+                ORDER BY
+                    create_day DESC
+            ) a
+        WHERE
+            a.create_day = #{createTime}
+    </select>
+
+
+    <!--教师端查看邀请助力的详细成绩-张艳伟-2021年10月11日10:54:03-->
+    <select id="selectTeamByTime" resultType="com.tfjybj.typing.model.TeamDetailResultModel">
+        SELECT
+            i.user_code,
+            i.team_id,
+            i.team_name,
+            i.user_name,
+            i.`create_time`,
+            i.real_time,
+            i.article_name,
+            i.score,
+            i.article_name,
+            i.speed,
+            i.right_rate,
+            i.set_time,
+            p.class_name,
+            i.improved_score
+        FROM
+            team_detail_result i
+                RIGHT JOIN `ty_person` p ON p.user_code = i.user_code
+--                 AND p.class_name  like'%21级%'
+                AND p.is_delete = 0
+
+        WHERE
+            i.`create_time` BETWEEN #{beginTime}
+
+                AND #{endTime}
+
+        ORDER BY
+            i.create_time DESC
+    </select>
+    <select id="selectTeamByTimeUserCode" resultType="com.tfjybj.typing.model.TeamDetailResultModel">
+        SELECT
+            count(*) as num
+        FROM
+            (
+                SELECT
+                    i.user_code,
+                    i.team_id,
+                    i.team_name,
+                    i.user_name
+                FROM
+                    team_detail_result i
+                WHERE
+                    i.`create_time` BETWEEN #{createTime}
+                        AND #{endTime}
+                  AND user_code = #{userCode}
+                ORDER BY
+                    i.create_time DESC
+            ) a
+    </select>
+    <select id="selectTeamByTimeAndUserCode" resultType="com.tfjybj.typing.model.TeamDetailResultModel">
+        SELECT
+            i.user_code,
+            i.team_id,
+            i.team_name,
+            i.user_name,
+            i.real_time,
+            i.article_name,
+            i.score,
+            i.speed,
+            i.right_rate,
+            i.set_time,
+            i.create_time,
+            i.improved_score
+        FROM
+            team_detail_result i
+            RIGHT JOIN (
+                SELECT DISTINCT
+                    *
+                FROM team_detail_result a
+                WHERE a.`create_time`
+                BETWEEN #{beginTime}
+                AND #{endTime}
+                AND a.user_code = #{userCode} ) t
+                ON t.team_id = i.team_id
+    </select>
+</mapper>
